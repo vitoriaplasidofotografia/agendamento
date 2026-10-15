@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Painel de agendamentos · Vitória</title>
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap">
+<style>
+:root{
+  --cream:#F4EDE4; --paper:#FBF7F1; --line:#E2D5C3;
+  --gold:#B08A4F; --gold-soft:#C9A76F;
+  --moss:#5E7262; --moss-deep:#3F5145;
+  --ink:#33402F; --soft:#5D6656; --danger:#9E1B1F;
+  --serif:"Cormorant Garamond",Garamond,"Times New Roman",serif;
+  --sans:"Jost","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);font-weight:300;font-size:15px;line-height:1.45}
+button,input,select{font:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:22px 16px 48px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:0}
+.sair{appearance:none;border:0;background:none;color:var(--soft);text-decoration:underline;cursor:pointer;font-size:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:6px}
+input,select{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 12px;color:var(--ink)}
+.btn{appearance:none;border:0;background:var(--moss);color:#fff;border-radius:999px;padding:12px 18px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:var(--moss-deep)}
+.btn.ghost{background:transparent;color:var(--moss);border:1px solid var(--moss)}
+.btn.perigo{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.filtros{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;align-items:end}
+.faixa{display:none;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:12px}
+.faixa.on{display:grid}
+@media (max-width:560px){.filtros{grid-template-columns:1fr}}
+.resumo{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+.pill{border-radius:999px;padding:6px 12px;font-size:13px;background:#fff;border:1px solid var(--line)}
+.pill b{font-weight:500}
+.pill.novo{border-color:var(--gold);color:#7a5a24;background:#FFF8EA}
+.dia{font-family:var(--serif);font-size:22px;font-weight:600;margin:22px 0 6px;text-transform:capitalize;border-bottom:1px solid var(--line);padding-bottom:4px}
+.item{display:grid;grid-template-columns:70px 1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:8px}
+.item.novo{border-color:var(--gold-soft);box-shadow:0 0 0 3px rgba(201,167,111,.18)}
+.hora{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--moss-deep)}
+.nome{font-weight:500;font-size:16px}
+.meta{font-size:13px;color:var(--soft);display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+.tag.aguard{color:#7a5a24;border-color:var(--gold-soft);background:#FFF8EA}
+.tag.ok{color:var(--moss-deep);border-color:var(--moss);background:#EEF3EE}
+.tag.canc{color:#777;border-color:#ccc;text-decoration:line-through}
+.tag.novo{color:#fff;background:var(--gold);border-color:var(--gold)}
+.acoes{display:flex;flex-direction:column;gap:6px}
+.acoes .btn{padding:9px 12px;font-size:11px;white-space:nowrap}
+a.zap{color:var(--moss);text-decoration:none;font-size:13px}
+a.zap:hover{text-decoration:underline}
+.vazio{text-align:center;color:var(--soft);padding:30px 0;font-family:var(--serif);font-style:italic;font-size:18px}
+.erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
+.login{max-width:360px;margin:60px auto 0}
+.login h1{text-align:center;margin-bottom:12px}
+.login .btn{width:100%;margin-top:12px}
+.atualiza{font-size:12px;color:var(--soft);text-align:right;margin-top:6px}
+[hidden]{display:none!important}
+@media (max-width:480px){.item{grid-template-columns:58px 1fr}.acoes{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- login -->
+  <section class="login card" id="tela-login">
+    <h1>Painel da Vitória</h1>
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" autocomplete="current-password">
+    <button class="btn" id="entrar" type="button">Entrar</button>
+    <p class="erro" id="erro-login"></p>
+  </section>
+
+  <!-- painel -->
+  <section id="tela-painel" hidden>
+    <header>
+      <h1>Agendamentos</h1>
+      <button class="sair" id="sair" type="button">Sair</button>
+    </header>
+
+    <div class="card">
+      <div class="filtros">
+        <div>
+          <label for="periodo">Período</label>
+          <select id="periodo">
+            <option value="hoje">Hoje</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mês</option>
+            <option value="30dias" selected>Próximos 30 dias</option>
+            <option value="custom">Escolher datas</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn ghost" id="atualizar" type="button" style="width:100%">Atualizar</button>
+        </div>
+        <div></div>
+        <div class="faixa" id="faixa-custom">
+          <div><label for="de">De</label><input type="date" id="de"></div>
+          <div><label for="ate">Até</label><input type="date" id="ate"></div>
+        </div>
+      </div>
+      <div class="resumo" id="resumo"></div>
+      <p class="erro" id="erro-painel"></p>
+      <p class="atualiza" id="atualizado"></p>
+    </div>
+
+    <div id="lista"></div>
+  </section>
+</div>
+
+<script>
+/* mesma URL do app da web usada no agendamento */
+const API_URL = 'https://script.google.com/macros/s/AKfycbw4m3jco0NlRIdwcfLF992HJaxMt4QYAkLF1Yf_Nhfx6jjWm0XQqcmYedzCRo2Uj3uz/exec';
+const CHAVE_SESSAO = 'painel-agenda-senha';
+const STATUS_AGUARDA = 'aguardando sinal';
+const STATUS_OK = 'sinal confirmado';
+const STATUS_CANC = 'cancelado';
+const NOVO_HORAS = 24;
+
+const $ = (id) => document.getElementById(id);
+const pad = (n) => (n < 10 ? '0' : '') + n;
+const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+let senha = '';
+let dados = [];
+let timer = null;
+
+function guardarSenha(s) { try { sessionStorage.setItem(CHAVE_SESSAO, s); } catch (e) {} }
+function lerSenha() { try { return sessionStorage.getItem(CHAVE_SESSAO) || ''; } catch (e) { return ''; } }
+
+function intervalo() {
+  const hoje = new Date();
+  const v = $('periodo').value;
+  if (v === 'hoje') return [iso(hoje), iso(hoje)];
+  if (v === 'semana') {
+    const ini = new Date(hoje); ini.setDate(hoje.getDate() - hoje.getDay());
+    const fim = new Date(ini); fim.setDate(ini.getDate() + 6);
+    return [iso(ini), iso(fim)];
+  }
+  if (v === 'mes') {
+    return [iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1)), iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0))];
+  }
+  if (v === '30dias') {
+    const fim = new Date(hoje); fim.setDate(hoje.getDate() + 30);
+    return [iso(hoje), iso(fim)];
+  }
+  return [$('de').value || iso(hoje), $('ate').value || iso(hoje)];
+}
+
+async function chamar(corpo) {
+  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(corpo) });
+  return r.json();
+}
+
+async function carregar() {
+  const [de, ate] = intervalo();
+  $('erro-painel').textContent = '';
+  try {
+    const r = await chamar({ acao: 'listar', senha: senha, de: de, ate: ate });
+    if (!r.ok) {
+      if (/Senha/.test(r.erro)) { sair(); $('erro-login').textContent = 'Senha incorreta.'; return; }
+      $('erro-painel').textContent = r.erro; return;
+    }
+    dados = r.agendamentos;
+    desenhar();
+    $('atualizado').textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    $('erro-painel').textContent = 'Sem conexão. Tentando de novo em 1 minuto.';
+  }
+}
+
+function ehNovo(a) {
+  if (a.status !== STATUS_AGUARDA) return false;
+  const criado = new Date(a.criado_em.replace(' ', 'T') + ':00');
+  return (Date.now() - criado.getTime()) < NOVO_HORAS * 3600 * 1000;
+}
+
+function desenhar() {
+  const aguard = dados.filter((a) => a.status === STATUS_AGUARDA).length;
+  const ok = dados.filter((a) => a.status === STATUS_OK).length;
+  const novos = dados.filter(ehNovo).length;
+  $('resumo').innerHTML = '';
+  [
+    ['Total', dados.filter((a) => a.status !== STATUS_CANC).length],
+    ['Aguardando sinal', aguard],
+    ['Sinal confirmado', ok],
+  ].forEach(([t, n]) => {
+    const p = document.createElement('span'); p.className = 'pill';
+    p.innerHTML = t + ': <b>' + n + '</b>';
+    $('resumo').appendChild(p);
+  });
+  if (novos) {
+    const p = document.createElement('span'); p.className = 'pill novo';
+    p.innerHTML = '<b>' + novos + '</b> novo(s) nas últimas 24h';
+    $('resumo').appendChild(p);
+  }
+
+  const lista = $('lista');
+  lista.innerHTML = '';
+  if (!dados.length) {
+    lista.innerHTML = '<p class="vazio">Nenhum agendamento neste período.</p>';
+    return;
+  }
+  let diaAtual = '';
+  dados.forEach((a) => {
+    if (a.data !== diaAtual) {
+      diaAtual = a.data;
+      const h = document.createElement('div'); h.className = 'dia';
+      h.textContent = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+      lista.appendChild(h);
+    }
+    lista.appendChild(linha(a));
+  });
+}
+
+function linha(a) {
+  const el = document.createElement('div');
+  el.className = 'item' + (ehNovo(a) ? ' novo' : '');
+
+  const hora = document.createElement('div'); hora.className = 'hora'; hora.textContent = a.inicio;
+
+  const info = document.createElement('div');
+  const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
+  const meta = document.createElement('div'); meta.className = 'meta';
+  const numero = a.whatsapp.replace(/\D/g, '');
+  const zap = document.createElement('a'); zap.className = 'zap'; zap.target = '_blank'; zap.rel = 'noopener';
+  zap.href = 'https://wa.me/' + numero; zap.textContent = 'WhatsApp ' + numero;
+  meta.appendChild(zap);
+  const tag = document.createElement('span');
+  tag.className = 'tag ' + (a.status === STATUS_OK ? 'ok' : a.status === STATUS_CANC ? 'canc' : 'aguard');
+  tag.textContent = a.status;
+  meta.appendChild(tag);
+  if (ehNovo(a)) { const n = document.createElement('span'); n.className = 'tag novo'; n.textContent = 'novo'; meta.appendChild(n); }
+  const pacote = document.createElement('div'); pacote.className = 'meta';
+  pacote.textContent = 'Pacote ' + a.pacote + ' · ' + a.valor_txt + ' · sinal ' + a.sinal_txt;
+  info.appendChild(nome); info.appendChild(pacote); info.appendChild(meta);
+
+  const acoes = document.createElement('div'); acoes.className = 'acoes';
+  if (a.status !== STATUS_OK && a.status !== STATUS_CANC) {
+    const ok = document.createElement('button'); ok.className = 'btn'; ok.type = 'button'; ok.textContent = 'Sinal recebido';
+    ok.addEventListener('click', () => mudar(a, STATUS_OK, ok));
+    acoes.appendChild(ok);
+  }
+  if (a.status !== STATUS_CANC) {
+    const c = document.createElement('button'); c.className = 'btn perigo'; c.type = 'button'; c.textContent = 'Cancelar';
+    c.addEventListener('click', () => { if (confirm('Cancelar o agendamento de ' + a.nome + '?')) mudar(a, STATUS_CANC, c); });
+    acoes.appendChild(c);
+  }
+
+  el.appendChild(hora); el.appendChild(info); el.appendChild(acoes);
+  return el;
+}
+
+async function mudar(a, novo, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'status', senha: senha, id: a.id, novo_status: novo });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; botao.disabled = false; return; }
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    botao.disabled = false;
+  }
+}
+
+function entrarPainel() {
+  $('tela-login').hidden = true;
+  $('tela-painel').hidden = false;
+  carregar();
+  clearInterval(timer);
+  timer = setInterval(carregar, 60000); // atualiza sozinho a cada minuto
+}
+
+function sair() {
+  senha = '';
+  try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (e) {}
+  clearInterval(timer);
+  $('tela-painel').hidden = true;
+  $('tela-login').hidden = false;
+}
+
+$('entrar').addEventListener('click', async () => {
+  senha = $('senha').value;
+  $('erro-login').textContent = '';
+  if (!senha) { $('erro-login').textContent = 'Digite a senha.'; return; }
+  const r = await chamar({ acao: 'listar', senha: senha, de: '1900-01-01', ate: '1900-01-02' }).catch(() => ({ ok: false, erro: 'Sem conexão.' }));
+  if (!r.ok) { senha = ''; $('erro-login').textContent = r.erro === 'Sem conexão.' ? r.erro : 'Senha incorreta.'; return; }
+  guardarSenha(senha);
+  entrarPainel();
+});
+$('senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('entrar').click(); });
+$('sair').addEventListener('click', sair);
+$('atualizar').addEventListener('click', carregar);
+$('periodo').addEventListener('change', () => {
+  $('faixa-custom').classList.toggle('on', $('periodo').value === 'custom');
+  carregar();
+});
+$('de').addEventListener('change', carregar);
+$('ate').addEventListener('change', carregar);
+
+/* já logada nesta aba? entra direto */
+if (lerSenha()) { senha = lerSenha(); entrarPainel(); }
+</script>
+</body>
+</html>

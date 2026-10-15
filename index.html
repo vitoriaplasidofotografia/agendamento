@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Agendar sessão · Vitória Plasido Fotografia</title>
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap">
+<style>
+:root{
+  --cream:#F4EDE4; --paper:#FBF7F1; --line:#E2D5C3;
+  --gold:#B08A4F; --gold-soft:#C9A76F;
+  --moss:#5E7262; --moss-deep:#3F5145;
+  --ink:#33402F; --soft:#5D6656; --danger:#9E1B1F;
+  --script:"Great Vibes","Brush Script MT",cursive;
+  --serif:"Cormorant Garamond",Garamond,"Times New Roman",serif;
+  --sans:"Jost","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);font-weight:300;font-size:16px;line-height:1.5}
+button,input{font:inherit}
+.wrap{max-width:460px;margin:0 auto;padding:24px 18px 48px}
+header{text-align:center;margin-bottom:18px}
+header img{width:min(70%,240px);height:auto}
+h1{font-family:var(--script);font-weight:400;color:var(--gold);font-size:46px;line-height:1;margin:10px 0 4px}
+.sub{font-family:var(--serif);font-style:italic;color:var(--soft);font-size:18px;margin:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px;box-shadow:0 10px 26px rgba(51,64,47,.06)}
+.steps{display:flex;justify-content:center;gap:8px;margin:14px 0 6px}
+.steps i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.steps i.on{background:var(--gold)}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head b{font-family:var(--serif);font-size:24px;font-weight:600;text-transform:capitalize}
+.nav{appearance:none;border:1px solid var(--line);background:var(--cream);color:var(--moss-deep);width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer}
+.nav:disabled{opacity:.35;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.wd{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);padding:4px 0}
+.day{appearance:none;border:1px solid transparent;background:transparent;border-radius:10px;aspect-ratio:1;font-size:16px;color:var(--ink);cursor:pointer;padding:0}
+.day.off{color:#B9B2A4;cursor:default;text-decoration:line-through}
+.day.free{background:#fff;border-color:var(--line)}
+.day.free:hover{border-color:var(--gold-soft)}
+.day.empty{visibility:hidden}
+.legend{font-size:13px;color:var(--soft);margin-top:12px;text-align:center}
+.pacotes{display:grid;gap:12px;margin-top:6px}
+.pac{appearance:none;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;cursor:pointer;color:var(--ink)}
+.pac:hover{border-color:var(--gold-soft);box-shadow:0 8px 20px rgba(51,64,47,.08)}
+.pac .nome{font-family:var(--script);font-size:38px;color:var(--gold);line-height:1.05}
+.pac .linha{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:4px;color:var(--soft);font-size:14px}
+.pac .valor{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--ink)}
+.pac .sinal{font-size:13px;color:var(--moss-deep);background:#EEF3EE;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.slot{appearance:none;border:1px solid var(--gold-soft);background:#fff;color:var(--moss-deep);border-radius:999px;padding:13px 10px;font-size:17px;cursor:pointer}
+.slot:hover{background:var(--moss);color:#fff;border-color:var(--moss)}
+.back{appearance:none;border:0;background:none;color:var(--gold);font-size:14px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:6px 0;margin-bottom:4px}
+h2{font-family:var(--serif);font-weight:600;font-size:26px;margin:4px 0 8px}
+label{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px}
+input[type=text],input[type=tel]{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:13px 14px;color:var(--ink)}
+input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
+.btn{display:block;width:100%;text-align:center;border:0;background:var(--moss);color:#fff;border-radius:999px;padding:15px 18px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:18px;text-decoration:none}
+.btn:hover{background:var(--moss-deep)}
+.btn.ghost{background:transparent;color:var(--moss);border:1px solid var(--moss)}
+.btn:disabled{opacity:.6;cursor:default}
+.erro{color:var(--danger);font-size:14px;margin-top:10px;min-height:1em}
+.resumo{font-family:var(--serif);font-size:20px;margin:0}
+.resumo b{font-weight:600}
+.resumo small{display:block;font-family:var(--sans);font-size:14px;color:var(--soft);margin-top:4px}
+.pix{background:#fff;border:1px dashed var(--gold-soft);border-radius:12px;padding:16px;margin-top:14px;text-align:center}
+.pix small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.pix code{display:block;font-family:var(--sans);font-size:17px;word-break:break-all;margin:8px 0;color:var(--ink)}
+.valor-grande{font-family:var(--serif);font-size:30px;font-weight:600;color:var(--moss-deep)}
+.totais{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--soft);margin-top:12px}
+ol.passos{padding-left:20px;margin:12px 0 0;color:var(--soft)}
+ol.passos li{margin:6px 0}
+.ok{font-size:14px;color:var(--moss-deep);margin-top:10px;text-align:center}
+.carregando{text-align:center;color:var(--soft);padding:20px 0;font-family:var(--serif);font-style:italic}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="img/logo-crop.png" alt="Vitória Plasido Fotografia">
+    <h1>Agende sua sessão</h1>
+    <p class="sub">Escolha o pacote, o melhor dia e horário para a sua família.</p>
+    <div class="steps" aria-hidden="true"><i id="p1" class="on"></i><i id="p2"></i><i id="p3"></i><i id="p4"></i></div>
+  </header>
+
+  <!-- 1. pacote -->
+  <section class="card" id="passo-pacote">
+    <h2>Escolha o pacote</h2>
+    <div class="pacotes" id="lista-pacotes"><p class="carregando">Carregando pacotes…</p></div>
+    <p class="erro" id="erro-pacote"></p>
+  </section>
+
+  <!-- 2. calendário -->
+  <section class="card" id="passo-data" hidden>
+    <button class="back" id="voltar-pacote">← Trocar o pacote</button>
+    <div class="cal-head">
+      <button class="nav" id="mes-ant" aria-label="Mês anterior">‹</button>
+      <b id="mes-nome"></b>
+      <button class="nav" id="mes-prox" aria-label="Próximo mês">›</button>
+    </div>
+    <div class="grid" id="calendario"></div>
+    <p class="legend">Dias disponíveis aparecem em destaque. Cada sessão dura 1 hora.</p>
+  </section>
+
+  <!-- 3. horário -->
+  <section class="card" id="passo-hora" hidden>
+    <button class="back" id="voltar-data">← Trocar a data</button>
+    <h2 id="data-escolhida"></h2>
+    <p class="sub">Horários disponíveis:</p>
+    <div class="slots" id="horarios"></div>
+    <p class="erro" id="erro-hora"></p>
+  </section>
+
+  <!-- 4. dados -->
+  <section class="card" id="passo-dados" hidden>
+    <button class="back" id="voltar-hora">← Trocar o horário</button>
+    <h2>Seus dados</h2>
+    <p class="resumo" id="resumo"></p>
+    <form id="form">
+      <label for="nome">Nome completo</label>
+      <input type="text" id="nome" autocomplete="name" required>
+      <label for="whatsapp">WhatsApp com DDD</label>
+      <input type="tel" id="whatsapp" placeholder="(51) 99999-9999" autocomplete="tel" required>
+      <button class="btn" id="btn-reservar" type="submit">Confirmar agendamento</button>
+      <p class="erro" id="erro-dados"></p>
+    </form>
+  </section>
+
+  <!-- 5. pagamento do sinal -->
+  <section class="card" id="passo-pix" hidden>
+    <h2>Quase lá!</h2>
+    <p class="resumo" id="resumo-final"></p>
+    <div class="totais">
+      <span>Pacote <b id="pix-pacote"></b></span>
+      <span id="pix-valor-pacote"></span>
+    </div>
+    <div class="pix">
+      <small>Valor do sinal (30%)</small>
+      <div class="valor-grande" id="pix-sinal"></div>
+    </div>
+    <div class="pix">
+      <small>Chave Pix</small>
+      <code id="chave-pix"></code>
+      <button class="btn ghost" id="copiar" type="button">Copiar chave Pix</button>
+      <p class="ok" id="copiado" hidden>Chave copiada!</p>
+    </div>
+    <ol class="passos">
+      <li>Pague o sinal de 30% pelo Pix.</li>
+      <li>Envie o comprovante no WhatsApp da Vitória, pelo botão abaixo.</li>
+      <li>Ela confirma o seu horário por lá.</li>
+    </ol>
+    <a class="btn" id="btn-comprovante" target="_blank" rel="noopener">Enviar comprovante no WhatsApp</a>
+  </section>
+</div>
+
+<script>
+/* URL do app da web publicada no Apps Script (ver Agenda.gs) */
+const API_URL = 'https://script.google.com/macros/s/AKfycbw4m3jco0NlRIdwcfLF992HJaxMt4QYAkLF1Yf_Nhfx6jjWm0XQqcmYedzCRo2Uj3uz/exec';
+
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const hoje = new Date();
+let mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+let diasLivres = [];
+let pacotes = [];
+let escolha = { pacote: null, data: '', hora: '' };
+let whatsappVitoria = '5551996505837';
+
+const $ = (id) => document.getElementById(id);
+const pad = (n) => (n < 10 ? '0' : '') + n;
+const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const mesIso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1);
+const SECOES = ['passo-pacote','passo-data','passo-hora','passo-dados','passo-pix'];
+
+/* n = 1 pacote, 2 data, 3 hora, 4 dados, 5 pix */
+function passo(n) {
+  SECOES.forEach((id, i) => { $(id).hidden = i + 1 !== n; });
+  [1,2,3,4].forEach((k) => $('p' + k).classList.toggle('on', k <= Math.min(n, 4)));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function api(params) {
+  const r = await fetch(API_URL + '?' + new URLSearchParams(params));
+  return r.json();
+}
+
+async function apiPost(corpo) {
+  // text/plain evita preflight de CORS no Apps Script
+  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(corpo) });
+  return r.json();
+}
+
+function desenharPacotes() {
+  const lista = $('lista-pacotes');
+  lista.innerHTML = '';
+  if (!pacotes.length) {
+    lista.innerHTML = '<p class="sub">Pacotes indisponíveis no momento.</p>';
+    return;
+  }
+  pacotes.forEach((p) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pac';
+    const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = p.nome;
+    const linha = document.createElement('div'); linha.className = 'linha';
+    const v = document.createElement('span'); v.className = 'valor'; v.textContent = p.valor_txt;
+    const s = document.createElement('span'); s.className = 'sinal'; s.textContent = 'Sinal 30%: ' + p.sinal_txt;
+    linha.appendChild(v); linha.appendChild(s);
+    b.appendChild(nome); b.appendChild(linha);
+    b.addEventListener('click', () => escolherPacote(p));
+    lista.appendChild(b);
+  });
+}
+
+function escolherPacote(p) {
+  escolha = { pacote: p, data: '', hora: '' };
+  carregarMes();
+  passo(2);
+}
+
+function desenharCalendario() {
+  $('mes-nome').textContent = MESES[mesAtual.getMonth()] + ' ' + mesAtual.getFullYear();
+  const grid = $('calendario');
+  grid.innerHTML = '';
+  ['D','S','T','Q','Q','S','S'].forEach((l) => {
+    const w = document.createElement('div'); w.className = 'wd'; w.textContent = l; grid.appendChild(w);
+  });
+  const primeiro = new Date(mesAtual.getFullYear(), mesAtual.getMonth(), 1).getDay();
+  for (let i = 0; i < primeiro; i++) {
+    const v = document.createElement('div'); v.className = 'day empty'; grid.appendChild(v);
+  }
+  const total = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 0).getDate();
+  for (let d = 1; d <= total; d++) {
+    const s = iso(new Date(mesAtual.getFullYear(), mesAtual.getMonth(), d));
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = d;
+    const livre = diasLivres.indexOf(s) !== -1;
+    b.className = 'day ' + (livre ? 'free' : 'off');
+    b.disabled = !livre;
+    if (livre) b.addEventListener('click', () => escolherDia(s));
+    grid.appendChild(b);
+  }
+  const mesMin = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  $('mes-ant').disabled = mesAtual <= mesMin;
+}
+
+async function carregarMes() {
+  $('calendario').innerHTML = '<p class="carregando" style="grid-column:1/-1">Carregando datas…</p>';
+  try {
+    const r = await api({ acao: 'dias', mes: mesIso(mesAtual) });
+    diasLivres = r.ok ? r.dias : [];
+  } catch (e) {
+    diasLivres = [];
+  }
+  desenharCalendario();
+}
+
+function textoData(s) {
+  return new Date(s + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+}
+
+async function escolherDia(s) {
+  escolha.data = s;
+  $('data-escolhida').textContent = textoData(s);
+  $('horarios').innerHTML = '<p class="carregando" style="grid-column:1/-1">Buscando horários…</p>';
+  $('erro-hora').textContent = '';
+  passo(3);
+  try {
+    const r = await api({ acao: 'horarios', data: s });
+    const horarios = r.ok ? r.horarios : [];
+    $('horarios').innerHTML = '';
+    if (!horarios.length) {
+      $('horarios').innerHTML = '<p class="sub" style="grid-column:1/-1">Não há horários livres neste dia. Escolha outra data.</p>';
+      return;
+    }
+    horarios.forEach((h) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'slot'; b.textContent = h;
+      b.addEventListener('click', () => escolherHora(h));
+      $('horarios').appendChild(b);
+    });
+  } catch (e) {
+    $('erro-hora').textContent = 'Não consegui carregar os horários. Tente de novo.';
+  }
+}
+
+function escolherHora(h) {
+  escolha.hora = h;
+  $('resumo').innerHTML = '';
+  const b = document.createElement('b'); b.textContent = textoData(escolha.data) + ' às ' + h;
+  const s = document.createElement('small');
+  s.textContent = 'Pacote ' + escolha.pacote.nome + ' · ' + escolha.pacote.valor_txt + ' · sinal 30%: ' + escolha.pacote.sinal_txt;
+  $('resumo').appendChild(b); $('resumo').appendChild(s);
+  $('erro-dados').textContent = '';
+  passo(4);
+}
+
+$('form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = $('btn-reservar');
+  btn.disabled = true; btn.textContent = 'Reservando…';
+  $('erro-dados').textContent = '';
+  try {
+    const r = await apiPost({
+      acao: 'reservar',
+      pacote: escolha.pacote.nome,
+      nome: $('nome').value,
+      whatsapp: $('whatsapp').value,
+      data: escolha.data,
+      inicio: escolha.hora,
+    });
+    if (!r.ok) {
+      $('erro-dados').textContent = r.erro;
+      if (/não está mais disponível/.test(r.erro)) { passo(2); carregarMes(); }
+      return;
+    }
+    mostrarPix(r);
+  } catch (e) {
+    $('erro-dados').textContent = 'Falha de conexão. Tente de novo.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+  }
+});
+
+function mostrarPix(r) {
+  $('resumo-final').innerHTML = '';
+  const b = document.createElement('b'); b.textContent = textoData(r.data) + ' às ' + r.inicio;
+  $('resumo-final').appendChild(b);
+  $('pix-pacote').textContent = r.pacote;
+  $('pix-valor-pacote').textContent = 'Valor: ' + r.valor_txt;
+  $('pix-sinal').textContent = r.sinal_txt;
+  $('chave-pix').textContent = r.chave_pix;
+  const msg = 'Olá, Vitória! Segue o comprovante do sinal (30%) do pacote ' + r.pacote +
+    ', sessão de ' + textoData(r.data) + ' às ' + r.inicio + ' (código ' + r.id + '). Nome: ' + $('nome').value + '.';
+  $('btn-comprovante').href = 'https://wa.me/' + (r.whatsapp || whatsappVitoria) + '?text=' + encodeURIComponent(msg);
+  passo(5);
+}
+
+$('copiar').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('chave-pix').textContent);
+    $('copiado').hidden = false;
+    setTimeout(() => { $('copiado').hidden = true; }, 2500);
+  } catch (e) {
+    $('copiado').textContent = 'Selecione a chave e copie manualmente.';
+    $('copiado').hidden = false;
+  }
+});
+
+$('mes-ant').addEventListener('click', () => { mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1); carregarMes(); });
+$('mes-prox').addEventListener('click', () => { mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1); carregarMes(); });
+$('voltar-pacote').addEventListener('click', () => passo(1));
+$('voltar-data').addEventListener('click', () => passo(2));
+$('voltar-hora').addEventListener('click', () => passo(3));
+
+/* carrega pacotes e dados gerais da Config */
+api({ acao: 'config' }).then((r) => {
+  if (r.ok) {
+    pacotes = r.pacotes || [];
+    if (r.whatsapp) whatsappVitoria = r.whatsapp;
+    desenharPacotes();
+  } else {
+    $('lista-pacotes').innerHTML = '<p class="sub">Não consegui carregar os pacotes. Atualize a página.</p>';
+  }
+}).catch(() => {
+  $('lista-pacotes').innerHTML = '<p class="sub">Não consegui carregar os pacotes. Atualize a página.</p>';
+});
+</script>
+</body>
+</html>
