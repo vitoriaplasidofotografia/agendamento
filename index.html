@@ -73,6 +73,13 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
 ol.passos{padding-left:20px;margin:12px 0 0;color:var(--soft)}
 ol.passos li{margin:6px 0}
 .ok{font-size:14px;color:var(--moss-deep);margin-top:10px;text-align:center}
+.politica{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;font-size:14px;color:var(--soft)}
+.politica b{color:var(--ink);font-weight:500}
+.politica ul{margin:8px 0 12px;padding-left:18px}
+.politica li{margin:4px 0}
+label.aceite{display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:0;cursor:pointer}
+label.aceite input{margin-top:3px}
+.politica-pix{font-size:13px;color:var(--soft);margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .carregando{text-align:center;color:var(--soft);padding:20px 0;font-family:var(--serif);font-style:italic}
 [hidden]{display:none!important}
 </style>
@@ -124,6 +131,14 @@ ol.passos li{margin:6px 0}
       <input type="text" id="nome" autocomplete="name" required>
       <label for="whatsapp">WhatsApp com DDD</label>
       <input type="tel" id="whatsapp" placeholder="(51) 99999-9999" autocomplete="tel" required>
+      <div class="politica">
+        <b>Política de cancelamento e reagendamento</b>
+        <ul>
+          <li>O sinal de 30% <b>não é reembolsável</b> em caso de cancelamento ou não comparecimento.</li>
+          <li>Reagendamentos devem ser solicitados com <b>no mínimo 48 horas</b> de antecedência, sujeitos à disponibilidade de agenda.</li>
+        </ul>
+        <label class="aceite"><input type="checkbox" id="aceite" required> Li e concordo com a política de cancelamento e reagendamento.</label>
+      </div>
       <button class="btn" id="btn-reservar" type="submit">Confirmar agendamento</button>
       <p class="erro" id="erro-dados"></p>
     </form>
@@ -152,6 +167,7 @@ ol.passos li{margin:6px 0}
       <li>Envie o comprovante no WhatsApp da Vitória, pelo botão abaixo.</li>
       <li>Ela confirma o seu horário por lá.</li>
     </ol>
+    <p class="politica-pix"><b>Lembrete:</b> o sinal de 30% não é reembolsável em caso de cancelamento ou não comparecimento. Reagendamentos devem ser pedidos com no mínimo 48 horas de antecedência, sujeitos à disponibilidade.</p>
     <a class="btn" id="btn-comprovante" target="_blank" rel="noopener">Enviar comprovante no WhatsApp</a>
   </section>
 </div>
@@ -305,6 +321,7 @@ $('form').addEventListener('submit', async (ev) => {
   try {
     const r = await apiPost({
       acao: 'reservar',
+      aceite: $('aceite').checked,
       pacote: escolha.pacote.nome,
       nome: $('nome').value,
       whatsapp: $('whatsapp').value,
