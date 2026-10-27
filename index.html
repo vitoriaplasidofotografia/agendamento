@@ -178,7 +178,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyjWQf3_YOn3vjh9YsEGnv3
 
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const hoje = new Date();
-let mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+// a agenda abre em novembro de 2026
+const INICIO_AGENDA = new Date(2026, 10, 1);
+let mesAtual = new Date(INICIO_AGENDA);
 let diasLivres = [];
 let pacotes = [];
 let escolha = { pacote: null, data: '', hora: '' };
@@ -258,7 +260,7 @@ function desenharCalendario() {
     if (livre) b.addEventListener('click', () => escolherDia(s));
     grid.appendChild(b);
   }
-  const mesMin = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const mesMin = INICIO_AGENDA;
   $('mes-ant').disabled = mesAtual <= mesMin;
 }
 
