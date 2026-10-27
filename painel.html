@@ -238,7 +238,7 @@ function linha(a) {
   meta.appendChild(tag);
   if (ehNovo(a)) { const n = document.createElement('span'); n.className = 'tag novo'; n.textContent = 'novo'; meta.appendChild(n); }
   const pacote = document.createElement('div'); pacote.className = 'meta';
-  pacote.textContent = 'Pacote ' + a.pacote + ' · ' + a.valor_txt + ' · sinal ' + a.sinal_txt;
+  pacote.textContent = 'Pacote ' + a.pacote + ' · ' + a.valor_txt + ' · sinal ' + a.sinal_txt + (a.email ? ' · ' + a.email : '');
   info.appendChild(nome); info.appendChild(pacote); info.appendChild(meta);
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
