@@ -90,7 +90,7 @@ label.aceite input{margin-top:3px}
     <img src="img/logo-crop.png" alt="Vitória Plasido Fotografia">
     <h1>Agende sua sessão</h1>
     <p class="sub">Escolha o pacote, o melhor dia e horário para a sua família.</p>
-    <div class="steps" aria-hidden="true"><i id="p1" class="on"></i><i id="p2"></i><i id="p3"></i><i id="p4"></i></div>
+    <div class="steps" aria-hidden="true"><i id="p1" class="on"></i><i id="p2"></i><i id="p3"></i><i id="p4"></i><i id="p5"></i></div>
   </header>
 
   <!-- 1. pacote -->
@@ -100,9 +100,27 @@ label.aceite input{margin-top:3px}
     <p class="erro" id="erro-pacote"></p>
   </section>
 
-  <!-- 2. calendário -->
+  <!-- 2. cenário -->
+  <section class="card" id="passo-cenario" hidden>
+    <button class="back" id="voltar-pacote-cenario">← Trocar o pacote</button>
+    <h2>Escolha o cenário</h2>
+    <div class="pacotes">
+      <button type="button" class="pac" data-cenario="Encanto">
+        <div class="nome">Encanto</div>
+        <div class="linha"><span class="valor" style="font-size:17px">Delicado e suave</span></div>
+        <p class="sub" style="margin:6px 0 0;font-size:15px">Tons claros, verde sálvia e luzes suaves.</p>
+      </button>
+      <button type="button" class="pac" data-cenario="Tradição">
+        <div class="nome">Tradição</div>
+        <div class="linha"><span class="valor" style="font-size:17px">Clássico e acolhedor</span></div>
+        <p class="sub" style="margin:6px 0 0;font-size:15px">O vermelho como protagonista, com bolas, almofadas e luzes quentes.</p>
+      </button>
+    </div>
+  </section>
+
+  <!-- 3. calendário -->
   <section class="card" id="passo-data" hidden>
-    <button class="back" id="voltar-pacote">← Trocar o pacote</button>
+    <button class="back" id="voltar-data-cenario">← Trocar o cenário</button>
     <div class="cal-head">
       <button class="nav" id="mes-ant" aria-label="Mês anterior">‹</button>
       <b id="mes-nome"></b>
@@ -185,19 +203,19 @@ const INICIO_AGENDA = new Date(2026, 10, 1);
 let mesAtual = new Date(INICIO_AGENDA);
 let diasLivres = [];
 let pacotes = [];
-let escolha = { pacote: null, data: '', hora: '' };
+let escolha = { pacote: null, cenario: '', data: '', hora: '' };
 let whatsappVitoria = '5551996505837';
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => (n < 10 ? '0' : '') + n;
 const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const mesIso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1);
-const SECOES = ['passo-pacote','passo-data','passo-hora','passo-dados','passo-pix'];
+const SECOES = ['passo-pacote','passo-cenario','passo-data','passo-hora','passo-dados','passo-pix'];
 
 /* n = 1 pacote, 2 data, 3 hora, 4 dados, 5 pix */
 function passo(n) {
   SECOES.forEach((id, i) => { $(id).hidden = i + 1 !== n; });
-  [1,2,3,4].forEach((k) => $('p' + k).classList.toggle('on', k <= Math.min(n, 4)));
+  [1,2,3,4,5].forEach((k) => $('p' + k).classList.toggle('on', k <= Math.min(n, 5)));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -234,8 +252,7 @@ function desenharPacotes() {
 }
 
 function escolherPacote(p) {
-  escolha = { pacote: p, data: '', hora: '' };
-  carregarMes();
+  escolha = { pacote: p, cenario: '', data: '', hora: '' };
   passo(2);
 }
 
@@ -286,7 +303,7 @@ async function escolherDia(s) {
   $('data-escolhida').textContent = textoData(s);
   $('horarios').innerHTML = '<p class="carregando" style="grid-column:1/-1">Buscando horários…</p>';
   $('erro-hora').textContent = '';
-  passo(3);
+  passo(4);
   try {
     const r = await api({ acao: 'horarios', data: s });
     const horarios = r.ok ? r.horarios : [];
@@ -311,10 +328,10 @@ function escolherHora(h) {
   $('resumo').innerHTML = '';
   const b = document.createElement('b'); b.textContent = textoData(escolha.data) + ' às ' + h;
   const s = document.createElement('small');
-  s.textContent = 'Pacote ' + escolha.pacote.nome + ' · ' + escolha.pacote.valor_txt + ' · sinal 30%: ' + escolha.pacote.sinal_txt;
+  s.textContent = 'Pacote ' + escolha.pacote.nome + ' · cenário ' + escolha.cenario + ' · ' + escolha.pacote.valor_txt + ' · sinal 30%: ' + escolha.pacote.sinal_txt;
   $('resumo').appendChild(b); $('resumo').appendChild(s);
   $('erro-dados').textContent = '';
-  passo(4);
+  passo(5);
 }
 
 $('form').addEventListener('submit', async (ev) => {
@@ -327,6 +344,7 @@ $('form').addEventListener('submit', async (ev) => {
       acao: 'reservar',
       aceite: $('aceite').checked,
       pacote: escolha.pacote.nome,
+      cenario: escolha.cenario,
       nome: $('nome').value,
       whatsapp: $('whatsapp').value,
       email: $('email').value,
@@ -335,7 +353,7 @@ $('form').addEventListener('submit', async (ev) => {
     });
     if (!r.ok) {
       $('erro-dados').textContent = r.erro;
-      if (/não está mais disponível/.test(r.erro)) { passo(2); carregarMes(); }
+      if (/não está mais disponível/.test(r.erro)) { passo(3); carregarMes(); }
       return;
     }
     mostrarPix(r);
@@ -357,7 +375,7 @@ function mostrarPix(r) {
   const msg = 'Olá, Vitória! Segue o comprovante do sinal (30%) do pacote ' + r.pacote +
     ', sessão de ' + textoData(r.data) + ' às ' + r.inicio + ' (código ' + r.id + '). Nome: ' + $('nome').value + '.';
   $('btn-comprovante').href = 'https://wa.me/' + (r.whatsapp || whatsappVitoria) + '?text=' + encodeURIComponent(msg);
-  passo(5);
+  passo(6);
 }
 
 $('copiar').addEventListener('click', async () => {
@@ -373,9 +391,13 @@ $('copiar').addEventListener('click', async () => {
 
 $('mes-ant').addEventListener('click', () => { mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1); carregarMes(); });
 $('mes-prox').addEventListener('click', () => { mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1); carregarMes(); });
-$('voltar-pacote').addEventListener('click', () => passo(1));
-$('voltar-data').addEventListener('click', () => passo(2));
-$('voltar-hora').addEventListener('click', () => passo(3));
+document.querySelectorAll('#passo-cenario [data-cenario]').forEach((b) => {
+  b.addEventListener('click', () => { escolha.cenario = b.dataset.cenario; carregarMes(); passo(3); });
+});
+$('voltar-pacote-cenario').addEventListener('click', () => passo(1));
+$('voltar-data-cenario').addEventListener('click', () => passo(2));
+$('voltar-data').addEventListener('click', () => passo(3));
+$('voltar-hora').addEventListener('click', () => passo(4));
 
 /* carrega pacotes e dados gerais da Config */
 api({ acao: 'config' }).then((r) => {
