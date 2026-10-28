@@ -94,6 +94,7 @@ a.zap:hover{text-decoration:underline}
             <option value="semana">Esta semana</option>
             <option value="mes">Este mês</option>
             <option value="30dias" selected>Próximos 30 dias</option>
+            <option value="todos">Todos os agendamentos</option>
             <option value="custom">Escolher datas</option>
           </select>
         </div>
@@ -146,6 +147,7 @@ function intervalo() {
   if (v === 'mes') {
     return [iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1)), iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0))];
   }
+  if (v === 'todos') return ['2000-01-01', '2999-12-31'];
   if (v === '30dias') {
     const fim = new Date(hoje); fim.setDate(hoje.getDate() + 30);
     return [iso(hoje), iso(fim)];
