@@ -62,14 +62,17 @@ input:focus,select:focus{outline:2px solid var(--cyan);outline-offset:1px}
 a.zap{color:var(--cyan);text-decoration:none;font-size:13px}
 a.zap:hover{text-decoration:underline}
 .vazio{text-align:center;color:var(--soft);padding:30px 0;font-family:var(--mono);font-style:italic;font-size:16px}
-.financas{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.financas{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px}
 .fin{background:#0a1120;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .fin .rotulo{font-family:var(--mono);font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.04em}
 .fin .numero{font-family:var(--disp);font-size:20px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:4px}
 .fin.pago .numero{color:var(--ok);text-shadow:0 0 14px rgba(54,241,160,.3)}
 .fin.pendente .numero{color:var(--warn);text-shadow:0 0 14px rgba(255,204,77,.25)}
 .fin.saldo .numero{color:var(--violet);text-shadow:0 0 14px rgba(124,92,255,.3)}
-@media (max-width:560px){.financas{grid-template-columns:1fr}}
+.fin.fatura .numero{color:var(--cyan);text-shadow:0 0 14px rgba(54,241,224,.3)}
+.fin.fatura{border-color:var(--cyan-soft)}
+@media (max-width:700px){.financas{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.financas{grid-template-columns:1fr}}
 .erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
 .login{max-width:360px;margin:60px auto 0}
 .login h1{text-align:center;margin-bottom:12px;font-size:26px}
@@ -124,6 +127,7 @@ a.zap:hover{text-decoration:underline}
         <div class="fin pago"><div class="rotulo">Recebido (sinal confirmado)</div><div class="numero" id="fin-pago">R$ 0,00</div></div>
         <div class="fin pendente"><div class="rotulo">Sinal aguardando confirmação</div><div class="numero" id="fin-pendente">R$ 0,00</div></div>
         <div class="fin saldo"><div class="rotulo">Resta receber (no dia da sessão)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
+        <div class="fin fatura"><div class="rotulo">Faturamento (recebido + a receber)</div><div class="numero" id="fin-fatura">R$ 0,00</div></div>
       </div>
       <div class="resumo" id="resumo"></div>
       <p class="erro" id="erro-painel"></p>
@@ -219,6 +223,7 @@ function desenhar() {
   $('fin-pago').textContent = formatarReais(pago);
   $('fin-pendente').textContent = formatarReais(pendente);
   $('fin-saldo').textContent = formatarReais(saldo);
+  $('fin-fatura').textContent = formatarReais(pago + saldo);
 
   const aguard = dados.filter((a) => a.status === STATUS_AGUARDA).length;
   const ok = dados.filter((a) => a.status === STATUS_OK).length;
