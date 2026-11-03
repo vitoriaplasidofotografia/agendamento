@@ -73,6 +73,15 @@ a.zap:hover{text-decoration:underline}
 .fin.fatura{border-color:var(--cyan-soft)}
 @media (max-width:700px){.financas{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:420px){.financas{grid-template-columns:1fr}}
+.custos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.custos .rotulo{font-family:var(--mono);font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.04em}
+.custos .numero{font-family:var(--disp);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
+.fin.custo .numero{color:var(--danger);text-shadow:0 0 14px rgba(255,77,106,.3)}
+.fin.custo{border-color:#5c2033}
+.fin.lucro .numero{color:var(--ok);text-shadow:0 0 14px rgba(54,241,160,.3)}
+.fin.lucro{border-color:#1f5c3f}
+@media (max-width:420px){.custos{grid-template-columns:1fr}}
+.tag.custo{color:var(--danger);border-color:var(--danger);background:rgba(255,77,106,.08)}
 .erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
 .login{max-width:360px;margin:60px auto 0}
 .login h1{text-align:center;margin-bottom:12px;font-size:26px}
@@ -129,6 +138,10 @@ a.zap:hover{text-decoration:underline}
         <div class="fin saldo"><div class="rotulo">Resta receber (no dia da sessão)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
         <div class="fin fatura"><div class="rotulo">Faturamento (recebido + a receber)</div><div class="numero" id="fin-fatura">R$ 0,00</div></div>
       </div>
+      <div class="custos" id="custos">
+        <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
+        <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
+      </div>
       <div class="resumo" id="resumo"></div>
       <p class="erro" id="erro-painel"></p>
       <p class="atualiza" id="atualizado"></p>
@@ -155,6 +168,9 @@ function lerReais(txt) {
 function formatarReais(v) {
   return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+/* custo estimado de produção de cada pacote (fotos impressas, Polaroid, bolinha de Natal) */
+const CUSTO_PACOTE = { 'Laço': 0, 'Presente': 22.50, 'Bênção': 43.15 };
+function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0; }
 const NOVO_HORAS = 24;
 
 const $ = (id) => document.getElementById(id);
@@ -224,6 +240,9 @@ function desenhar() {
   $('fin-pendente').textContent = formatarReais(pendente);
   $('fin-saldo').textContent = formatarReais(saldo);
   $('fin-fatura').textContent = formatarReais(pago + saldo);
+  const custo = ativos.reduce((s, a) => s + custoDe(a), 0);
+  $('fin-custo').textContent = formatarReais(custo);
+  $('fin-lucro').textContent = formatarReais(pago + saldo - custo);
 
   const aguard = dados.filter((a) => a.status === STATUS_AGUARDA).length;
   const ok = dados.filter((a) => a.status === STATUS_OK).length;
@@ -284,6 +303,9 @@ function linha(a) {
     const resta = document.createElement('span'); resta.className = 'tag resta';
     resta.textContent = 'resta ' + formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt));
     meta.appendChild(resta);
+    const custo = document.createElement('span'); custo.className = 'tag custo';
+    custo.textContent = 'custo ' + formatarReais(custoDe(a));
+    meta.appendChild(custo);
   }
   const pacote = document.createElement('div'); pacote.className = 'meta';
   pacote.textContent = 'Pacote ' + a.pacote + ' · ' + a.valor_txt + ' · sinal ' + a.sinal_txt + ' · cenário ' + (a.cenario || '—') + ' · ' + (a.pessoas || '?') + ' pessoa(s)' + (a.email ? ' · ' + a.email : '');
