@@ -82,6 +82,8 @@ a.zap:hover{text-decoration:underline}
 .fin.lucro{border-color:#1f5c3f}
 @media (max-width:420px){.custos{grid-template-columns:1fr}}
 .tag.custo{color:var(--danger);border-color:var(--danger);background:rgba(255,77,106,.08)}
+.tag.prazo-digital{color:var(--cyan);border-color:var(--cyan-soft);background:rgba(54,241,224,.08)}
+.tag.prazo-fisico{color:var(--magenta);border-color:var(--magenta);background:rgba(255,79,216,.08)}
 .erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
 .login{max-width:360px;margin:60px auto 0}
 .login h1{text-align:center;margin-bottom:12px;font-size:26px}
@@ -171,6 +173,14 @@ function formatarReais(v) {
 /* custo estimado de produção de cada pacote (fotos impressas, Polaroid, bolinha de Natal) */
 const CUSTO_PACOTE = { 'Laço': 0, 'Presente': 22.50, 'Bênção': 43.15 };
 function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0; }
+/* prazos de entrega, em dias corridos após a sessão */
+const PRAZO_DIGITAL_DIAS = 6;
+const PRAZO_FISICO_DIAS = 10;
+function dataLimite(dataIso, dias) {
+  const d = new Date(dataIso + 'T12:00:00');
+  d.setDate(d.getDate() + dias);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
 const NOVO_HORAS = 24;
 
 const $ = (id) => document.getElementById(id);
@@ -310,6 +320,15 @@ function linha(a) {
   const pacote = document.createElement('div'); pacote.className = 'meta';
   pacote.textContent = 'Pacote ' + a.pacote + ' · ' + a.valor_txt + ' · sinal ' + a.sinal_txt + ' · cenário ' + (a.cenario || '—') + ' · ' + (a.pessoas || '?') + ' pessoa(s)' + (a.email ? ' · ' + a.email : '');
   info.appendChild(nome); info.appendChild(pacote); info.appendChild(meta);
+  if (a.status !== STATUS_CANC) {
+    const prazos = document.createElement('div'); prazos.className = 'meta';
+    const pd = document.createElement('span'); pd.className = 'tag prazo-digital';
+    pd.textContent = 'digital até ' + dataLimite(a.data, PRAZO_DIGITAL_DIAS);
+    const pf = document.createElement('span'); pf.className = 'tag prazo-fisico';
+    pf.textContent = 'impresso até ' + dataLimite(a.data, PRAZO_FISICO_DIAS);
+    prazos.appendChild(pd); prazos.appendChild(pf);
+    info.appendChild(prazos);
+  }
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
   if (a.status !== STATUS_OK && a.status !== STATUS_CANC) {
