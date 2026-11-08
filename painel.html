@@ -55,6 +55,10 @@ input:focus,select:focus{border-color:var(--blue)}
 .dia{font-family:var(--disp);font-size:14px;font-weight:600;margin:22px 0 6px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);border-bottom:1px solid var(--line);padding-bottom:6px}
 .item{display:grid;grid-template-columns:70px 1fr auto;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--raio);padding:12px 14px;margin-top:8px}
 .item.novo{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple-soft)}
+.item.concluido{position:relative;background:#eceef1}
+.item.concluido::after{content:'';position:absolute;inset:0;background:rgba(120,130,145,.16);border-radius:var(--raio);pointer-events:none}
+.item.concluido .nome,.item.concluido .meta,.item.concluido .hora{opacity:.65}
+.tag.concluido-tag{color:#4a5567;background:#dde1e7}
 .hora{font-family:var(--disp);font-size:18px;font-weight:600;color:var(--blue)}
 .nome{font-weight:600;font-size:16px;color:var(--ink)}
 .meta{font-size:13px;color:var(--soft);display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
@@ -588,7 +592,8 @@ async function moverEtapa(a, novaEtapa) {
 
 function linha(a) {
   const el = document.createElement('div');
-  el.className = 'item' + (ehNovo(a) ? ' novo' : '');
+  const concluido = (a.etapa || 1) === ETAPAS.length;
+  el.className = 'item' + (ehNovo(a) ? ' novo' : '') + (concluido ? ' concluido' : '');
 
   const hora = document.createElement('div'); hora.className = 'hora'; hora.textContent = a.inicio;
 
@@ -606,6 +611,7 @@ function linha(a) {
   tag.textContent = a.status === STATUS_OK ? 'sinal pago' : a.status === STATUS_CANC ? 'cancelado' : 'sinal pendente';
   meta.appendChild(tag);
   if (ehNovo(a)) { const n = document.createElement('span'); n.className = 'tag novo'; n.textContent = 'novo'; meta.appendChild(n); }
+  if (concluido) { const c = document.createElement('span'); c.className = 'tag concluido-tag'; c.textContent = 'concluído'; meta.appendChild(c); }
   info.appendChild(nome); info.appendChild(pacote); info.appendChild(meta);
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
