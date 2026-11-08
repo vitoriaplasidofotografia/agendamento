@@ -68,6 +68,7 @@ input:focus,select:focus{border-color:var(--blue)}
 .tag.canc{color:#9b9a97;background:#f1f1ef;text-decoration:line-through}
 .tag.novo{color:#fff;background:var(--purple)}
 .tag.resta{color:var(--blue);background:var(--blue-soft)}
+.tag.extras{color:var(--purple);background:var(--purple-soft)}
 .acoes{display:flex;flex-direction:column;gap:6px}
 .acoes .btn{padding:8px 12px;font-size:12px;white-space:nowrap}
 a.zap{color:var(--blue);text-decoration:none;font-size:13px}
@@ -162,6 +163,7 @@ a.zap:hover{text-decoration:underline}
     <div class="abas">
       <button class="aba ativa" id="aba-lista" type="button">Agendamentos</button>
       <button class="aba" id="aba-financeiro" type="button">Financeiro</button>
+      <button class="aba" id="aba-meta" type="button">Meta</button>
       <button class="aba" id="aba-kanban" type="button">Kanban</button>
     </div>
 
@@ -212,6 +214,15 @@ a.zap:hover{text-decoration:underline}
       <div id="financeiro-lista"></div>
     </div>
 
+    <div id="view-meta" hidden>
+      <div class="card">
+        <label for="meta-valor">Meta de faturamento (R$)</label>
+        <input type="number" id="meta-valor" min="0" step="50" placeholder="Ex.: 10000">
+        <div class="resumo" id="meta-resumo" style="margin-top:14px"></div>
+        <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
+      </div>
+    </div>
+
     <div id="view-kanban" hidden>
       <p class="atualiza" style="text-align:left;margin:0 0 10px">Cada cliente agendada entra na 1ª coluna. Clique no card pra ver os detalhes, ou arraste pra mover de etapa. O filtro de período acima também vale aqui.</p>
       <div class="kanban" id="kanban"></div>
@@ -243,6 +254,9 @@ function formatarReais(v) {
 /* custo estimado de produção de cada pacote (fotos impressas, Polaroid, bolinha de Natal) */
 const CUSTO_PACOTE = { 'Laço': 0, 'Presente': 22.50, 'Bênção': 43.15 };
 function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0; }
+/* valor de cada fotografia extra, cobrada além do pacote (mesmo valor informado na galeria Alboom) */
+const PRECO_FOTO_EXTRA = 14.90;
+function extrasValorDe(a) { return (a.fotos_extras || 0) * PRECO_FOTO_EXTRA; }
 /* prazos de entrega, em dias corridos após a sessão */
 const PRAZO_DIGITAL_DIAS = 6;
 const PRAZO_FISICO_DIAS = 10;
@@ -395,6 +409,7 @@ async function carregar() {
     }
     dados = r.agendamentos;
     desenhar();
+    carregarCapacidade();
     $('atualizado').textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   } catch (e) {
     $('erro-painel').textContent = 'Sem conexão. Tentando de novo em 1 minuto.';
@@ -411,7 +426,7 @@ function desenhar() {
   const ativos = dados.filter((a) => a.status !== STATUS_CANC);
   const pago = ativos.filter((a) => a.status === STATUS_OK).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
   const pendente = ativos.filter((a) => a.status === STATUS_AGUARDA).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
-  const saldo = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)), 0);
+  const saldo = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a), 0);
   $('fin-pago').textContent = formatarReais(pago);
   $('fin-pendente').textContent = formatarReais(pendente);
   $('fin-saldo').textContent = formatarReais(saldo);
@@ -457,6 +472,7 @@ function desenhar() {
   });
 
   desenharFinanceiro();
+  desenharMeta();
   desenharKanban();
 }
 
@@ -633,6 +649,8 @@ function linha(a) {
 function linhaFinanceira(a) {
   const el = document.createElement('div');
   el.className = 'item';
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', () => abrirModalFinanceiro(a));
 
   const hora = document.createElement('div'); hora.className = 'hora'; hora.textContent = a.inicio;
 
@@ -650,8 +668,13 @@ function linhaFinanceira(a) {
     tagSaldo.className = 'tag ' + (a.saldo_pago ? 'ok' : 'aguard');
     tagSaldo.textContent = a.saldo_pago ? '70% pago' : '70% pendente';
     linha2.appendChild(tagSaldo);
+    if (a.fotos_extras > 0) {
+      const tagExtras = document.createElement('span'); tagExtras.className = 'tag extras';
+      tagExtras.textContent = a.fotos_extras + ' foto(s) extra · ' + formatarReais(extrasValorDe(a));
+      linha2.appendChild(tagExtras);
+    }
     const resta = document.createElement('span'); resta.className = 'tag resta';
-    resta.textContent = 'resta ' + formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt));
+    resta.textContent = 'resta ' + formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt) + extrasValorDe(a));
     linha2.appendChild(resta);
     const custo = document.createElement('span'); custo.className = 'tag custo';
     custo.textContent = 'custo ' + formatarReais(custoDe(a));
@@ -663,12 +686,62 @@ function linhaFinanceira(a) {
   if (a.status !== STATUS_CANC) {
     const s = document.createElement('button'); s.className = a.saldo_pago ? 'btn ghost' : 'btn prim'; s.type = 'button';
     s.textContent = a.saldo_pago ? 'Desfazer 70%' : 'Marcar 70% pago';
-    s.addEventListener('click', () => mudarSaldo(a, !a.saldo_pago, s));
+    s.addEventListener('click', (e) => { e.stopPropagation(); mudarSaldo(a, !a.saldo_pago, s); });
     acoes.appendChild(s);
   }
 
   el.appendChild(hora); el.appendChild(info); el.appendChild(acoes);
   return el;
+}
+
+function abrirModalFinanceiro(a) {
+  const extras = a.fotos_extras || 0;
+  const extrasTotalValor = extrasValorDe(a);
+  const restaBase = lerReais(a.valor_txt) - lerReais(a.sinal_txt);
+  let html = '<button class="modal-fechar" id="modal-fechar" type="button">&times;</button>';
+  html += '<h2>' + a.nome + '</h2>';
+  html += '<div class="modal-secao">Pacote</div>';
+  html += linhaModal('Pacote', a.pacote);
+  html += linhaModal('Valor total', a.valor_txt);
+  html += linhaModal('Sinal (30%)', a.sinal_txt + ' · ' + (a.status === STATUS_OK ? 'pago' : a.status === STATUS_CANC ? 'cancelado' : 'pendente'));
+  if (a.status !== STATUS_CANC) {
+    html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
+    html += '<div class="modal-secao">Fotos extras (R$ ' + PRECO_FOTO_EXTRA.toFixed(2).replace('.', ',') + ' cada)</div>';
+    html += '<div class="modal-linha"><span class="rot">Quantidade adquirida</span><span class="val"><input type="number" id="modal-extras-qtd" min="0" step="1" value="' + extras + '" style="width:80px;text-align:right;padding:4px 8px"></span></div>';
+    html += linhaModal('Total em fotos extras', '<span id="modal-extras-total">' + formatarReais(extrasTotalValor) + '</span>');
+    html += linhaModal('Resta receber (70% + extras)', '<span id="modal-extras-resta">' + formatarReais(restaBase + extrasTotalValor) + '</span>');
+    html += '<button class="btn prim" id="modal-extras-salvar" type="button" style="width:100%;margin-top:10px">Salvar fotos extras</button>';
+  }
+  $('modal-caixa').innerHTML = html;
+  $('modal-fundo').hidden = false;
+  $('modal-fechar').addEventListener('click', fecharModal);
+  if (a.status !== STATUS_CANC) {
+    const input = $('modal-extras-qtd');
+    input.addEventListener('input', () => {
+      const q = Math.max(0, parseInt(input.value, 10) || 0);
+      const tot = q * PRECO_FOTO_EXTRA;
+      $('modal-extras-total').textContent = formatarReais(tot);
+      $('modal-extras-resta').textContent = formatarReais(restaBase + tot);
+    });
+    $('modal-extras-salvar').addEventListener('click', () => {
+      const q = Math.max(0, parseInt(input.value, 10) || 0);
+      salvarExtras(a, q);
+    });
+  }
+}
+
+async function salvarExtras(a, qtd) {
+  const botao = $('modal-extras-salvar');
+  if (botao) botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'extras', senha: senha, id: a.id, qtd: qtd });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; if (botao) botao.disabled = false; return; }
+    fecharModal();
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    if (botao) botao.disabled = false;
+  }
 }
 
 async function mudarSaldo(a, pago, botao) {
@@ -698,6 +771,8 @@ async function mudar(a, novo, botao) {
 function entrarPainel() {
   $('tela-login').hidden = true;
   $('tela-painel').hidden = false;
+  const mv = lerMeta();
+  if (mv) $('meta-valor').value = mv;
   carregar();
   clearInterval(timer);
   timer = setInterval(carregar, 60000); // atualiza sozinho a cada minuto
@@ -730,8 +805,8 @@ $('periodo').addEventListener('change', () => {
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 function trocarAba(ativa) {
-  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', kanban: 'aba-kanban' };
-  const views = { lista: 'view-lista', financeiro: 'view-financeiro', kanban: 'view-kanban' };
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban' };
   Object.keys(abas).forEach((k) => {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
@@ -739,7 +814,61 @@ function trocarAba(ativa) {
 }
 $('aba-lista').addEventListener('click', () => trocarAba('lista'));
 $('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
+$('aba-meta').addEventListener('click', () => trocarAba('meta'));
 $('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
+
+/* ---------- aba Meta ---------- */
+const CHAVE_META = 'painel-meta-valor';
+function lerMeta() { try { return Number(localStorage.getItem(CHAVE_META)) || 0; } catch (e) { return 0; } }
+function guardarMeta(v) { try { localStorage.setItem(CHAVE_META, String(v)); } catch (e) {} }
+let capacidadeLivre = null;
+
+async function carregarCapacidade() {
+  try {
+    const r = await chamar({ acao: 'capacidade', senha: senha });
+    capacidadeLivre = r.ok ? r.livres : null;
+  } catch (e) {
+    capacidadeLivre = null;
+  }
+  desenharMeta();
+}
+
+function desenharMeta() {
+  const box = $('meta-resumo');
+  box.innerHTML = '';
+  const ativos = dados.filter((a) => a.status !== STATUS_CANC);
+  const faturamentoAtual = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) + extrasValorDe(a)), 0);
+  const ticketMedio = ativos.length ? ativos.reduce((s, a) => s + lerReais(a.valor_txt), 0) / ativos.length : 0;
+  const meta = lerMeta();
+  const falta = Math.max(0, meta - faturamentoAtual);
+
+  function pill(t, v, classe) {
+    const p = document.createElement('span'); p.className = 'pill' + (classe ? ' ' + classe : '');
+    p.innerHTML = t + ': <b>' + v + '</b>';
+    box.appendChild(p);
+  }
+  pill('Horários livres até 19/12', capacidadeLivre === null ? '…' : capacidadeLivre);
+  pill('Ticket médio', formatarReais(ticketMedio));
+  pill('Faturamento atual (sessões já marcadas)', formatarReais(faturamentoAtual));
+
+  if (meta > 0) {
+    const sessoesNecessarias = ticketMedio > 0 ? Math.ceil(falta / ticketMedio) : 0;
+    const fotosNecessarias = Math.ceil(falta / PRECO_FOTO_EXTRA);
+    pill('Falta pra meta', formatarReais(falta), falta > 0 ? 'novo' : '');
+    if (falta > 0) {
+      pill('Sessões novas necessárias', sessoesNecessarias + ' (ticket médio)');
+      pill('Ou fotos extras necessárias', fotosNecessarias + ' (a R$ 14,90 cada)');
+      if (capacidadeLivre !== null) {
+        const cabe = sessoesNecessarias <= capacidadeLivre;
+        pill('Cabe nos horários livres?', cabe ? 'sim' : 'não — considere vender fotos extras', cabe ? '' : 'novo');
+      }
+    } else {
+      pill('Meta', 'já atingida ✓');
+    }
+  }
+}
+
+$('meta-valor').addEventListener('input', () => { guardarMeta($('meta-valor').value); desenharMeta(); });
 
 /* já logada nesta aba? entra direto */
 if (lerSenha()) { senha = lerSenha(); entrarPainel(); }
