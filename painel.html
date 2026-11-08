@@ -120,6 +120,16 @@ a.zap:hover{text-decoration:underline}
 .login h1{text-align:center;margin-bottom:12px;font-size:24px}
 .login .btn{width:100%;margin-top:12px}
 .atualiza{font-size:11px;color:var(--soft);text-align:right;margin-top:6px}
+.modal-fundo{position:fixed;inset:0;background:rgba(15,15,15,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}
+.modal-caixa{background:#fff;border-radius:10px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;box-shadow:0 16px 40px rgba(15,15,15,.25)}
+.modal-caixa h2{font-family:var(--disp);font-size:19px;margin:0 0 4px;color:var(--ink)}
+.modal-fechar{float:right;appearance:none;border:0;background:none;color:var(--soft);font-size:20px;line-height:1;cursor:pointer;padding:0 0 0 10px}
+.modal-linha{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.modal-linha:last-child{border-bottom:0}
+.modal-linha .rot{color:var(--soft)}
+.modal-linha .val{color:var(--ink);font-weight:500;text-align:right}
+.modal-secao{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:16px 0 2px}
+.modal-secao:first-of-type{margin-top:12px}
 [hidden]{display:none!important}
 @media (max-width:480px){.item{grid-template-columns:58px 1fr}.acoes{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
 </style>
@@ -190,10 +200,14 @@ a.zap:hover{text-decoration:underline}
     </div>
 
     <div id="view-kanban" hidden>
-      <p class="atualiza" style="text-align:left;margin:0 0 10px">Cada cliente agendada entra na 1ª coluna. Use as setas pra mover pra etapa seguinte do processo de seleção, edição e entrega. O filtro de período acima também vale aqui.</p>
+      <p class="atualiza" style="text-align:left;margin:0 0 10px">Cada cliente agendada entra na 1ª coluna. Clique no card pra ver os detalhes, ou arraste pra mover de etapa. O filtro de período acima também vale aqui.</p>
       <div class="kanban" id="kanban"></div>
     </div>
   </section>
+</div>
+
+<div class="modal-fundo" id="modal-fundo" hidden>
+  <div class="modal-caixa" id="modal-caixa"></div>
 </div>
 
 <script>
@@ -472,20 +486,61 @@ function kcard(a, etapa) {
   el.draggable = true;
   el.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', String(a.id)); el.classList.add('arrastando'); });
   el.addEventListener('dragend', () => el.classList.remove('arrastando'));
+  el.addEventListener('click', () => abrirModal(a, etapa));
   const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
   const meta = document.createElement('div'); meta.className = 'meta';
   meta.textContent = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' · ' + a.inicio + ' · ' + a.pacote;
   const mover = document.createElement('div'); mover.className = 'mover';
   const ant = document.createElement('button'); ant.type = 'button'; ant.textContent = '‹ voltar';
   ant.disabled = etapa === 1;
-  ant.addEventListener('click', () => moverEtapa(a, etapa - 1));
+  ant.addEventListener('click', (e) => { e.stopPropagation(); moverEtapa(a, etapa - 1); });
   const prox = document.createElement('button'); prox.type = 'button'; prox.textContent = 'avançar ›';
   prox.disabled = etapa === ETAPAS.length;
-  prox.addEventListener('click', () => moverEtapa(a, etapa + 1));
+  prox.addEventListener('click', (e) => { e.stopPropagation(); moverEtapa(a, etapa + 1); });
   mover.appendChild(ant); mover.appendChild(prox);
   el.appendChild(nome); el.appendChild(meta); el.appendChild(mover);
   return el;
 }
+
+function linhaModal(rot, val) {
+  return '<div class="modal-linha"><span class="rot">' + rot + '</span><span class="val">' + val + '</span></div>';
+}
+
+function abrirModal(a, etapa) {
+  const numero = a.whatsapp.replace(/\D/g, '');
+  let html = '<button class="modal-fechar" id="modal-fechar" type="button">&times;</button>';
+  html += '<h2>' + a.nome + '</h2>';
+  html += '<div class="modal-secao">Sessão</div>';
+  html += linhaModal('Data e horário', new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) + ' · ' + a.inicio);
+  html += linhaModal('Cenário', a.cenario || '—');
+  html += linhaModal('Pessoas', (a.pessoas || '?') + ' pessoa(s)');
+  html += linhaModal('Etapa do Kanban', etapa + '. ' + ETAPAS[etapa - 1]);
+  html += '<div class="modal-secao">Contato</div>';
+  html += linhaModal('WhatsApp', '<a class="zap" target="_blank" rel="noopener" href="https://wa.me/' + numero + '">' + numero + '</a>');
+  html += linhaModal('E-mail', a.email || '—');
+  html += '<div class="modal-secao">Financeiro</div>';
+  html += linhaModal('Pacote', a.pacote);
+  html += linhaModal('Valor total', a.valor_txt);
+  html += linhaModal('Sinal', a.sinal_txt + ' (' + a.status + ')');
+  if (a.status !== STATUS_CANC) {
+    html += linhaModal('Resta receber', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt)));
+    html += linhaModal('Custo estimado', formatarReais(custoDe(a)));
+  }
+  if (a.status !== STATUS_CANC) {
+    html += '<div class="modal-secao">Prazos de entrega</div>';
+    html += linhaModal('Arquivos digitais até', dataLimite(a.data, PRAZO_DIGITAL_DIAS));
+    html += linhaModal('Fotos impressas até', dataLimite(a.data, PRAZO_FISICO_DIAS));
+  }
+  $('modal-caixa').innerHTML = html;
+  $('modal-fundo').hidden = false;
+  $('modal-fechar').addEventListener('click', fecharModal);
+}
+
+function fecharModal() {
+  $('modal-fundo').hidden = true;
+}
+$('modal-fundo').addEventListener('click', (e) => { if (e.target.id === 'modal-fundo') fecharModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
 
 async function moverEtapa(a, novaEtapa) {
   try {
