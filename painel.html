@@ -88,6 +88,10 @@ a.zap:hover{text-decoration:underline}
 .custos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
 .custos .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500}
 .custos .numero{font-family:var(--disp);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
+.bloco-titulo{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:0 0 10px;font-weight:600}
+.fin.editavel label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500;display:block;margin-bottom:6px}
+.fin.editavel input{width:100%;border:1px solid var(--line-forte);background:#fff;border-radius:var(--raio-p);padding:8px 10px;font-family:var(--disp);font-size:16px;font-weight:600;color:var(--ink)}
+.fin.editavel input:focus{border-color:var(--blue)}
 .fin.custo .numero{color:var(--red)}
 .fin.custo{border-color:var(--red-soft)}
 .fin.lucro .numero{color:var(--green)}
@@ -216,11 +220,34 @@ a.zap:hover{text-decoration:underline}
 
     <div id="view-meta" hidden>
       <div class="card">
-        <label for="meta-valor">Meta de faturamento (R$)</label>
-        <input type="number" id="meta-valor" min="0" step="50" placeholder="Ex.: 10000">
-        <div class="resumo" id="meta-resumo" style="margin-top:14px"></div>
-        <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
+        <div class="bloco-titulo">Automático</div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Horários livres até 19/12</div><div class="numero" id="meta-horarios">—</div></div>
+          <div class="fin"><div class="rotulo">Ticket médio</div><div class="numero" id="meta-ticket">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Faturamento atual</div><div class="numero" id="meta-faturamento">R$ 0,00</div></div>
+        </div>
       </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Você define</div>
+        <div class="financas">
+          <div class="fin editavel"><label for="meta-valor">Meta de faturamento (R$)</label><input type="number" id="meta-valor" min="0" step="50" placeholder="Ex.: 10000"></div>
+          <div class="fin editavel"><label for="meta-preco-extra">Valor da foto extra (R$)</label><input type="number" id="meta-preco-extra" min="0" step="0.1"></div>
+          <div class="fin editavel"><label for="meta-media-extras">Média de fotos extras por cliente</label><input type="number" id="meta-media-extras" min="0" step="0.5"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Resultado</div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Ticket médio ajustado (c/ fotos extras)</div><div class="numero" id="meta-ticket-ajustado">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Falta pra meta</div><div class="numero" id="meta-falta">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Sessões novas necessárias</div><div class="numero" id="meta-sessoes">0</div></div>
+          <div class="fin"><div class="rotulo">Fotos extras estimadas nessas sessões</div><div class="numero" id="meta-fotos-estimadas">0</div></div>
+          <div class="fin"><div class="rotulo">Cabe nos horários livres?</div><div class="numero" id="meta-cabe">—</div></div>
+        </div>
+      </div>
+      <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
     </div>
 
     <div id="view-kanban" hidden>
@@ -771,8 +798,10 @@ async function mudar(a, novo, botao) {
 function entrarPainel() {
   $('tela-login').hidden = true;
   $('tela-painel').hidden = false;
-  const mv = lerMeta();
+  const mv = lerNum(CHAVE_META, 0);
   if (mv) $('meta-valor').value = mv;
+  $('meta-preco-extra').value = lerNum(CHAVE_PRECO_EXTRA, PRECO_FOTO_EXTRA);
+  $('meta-media-extras').value = lerNum(CHAVE_MEDIA_EXTRAS, 0);
   carregar();
   clearInterval(timer);
   timer = setInterval(carregar, 60000); // atualiza sozinho a cada minuto
@@ -818,9 +847,11 @@ $('aba-meta').addEventListener('click', () => trocarAba('meta'));
 $('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
 
 /* ---------- aba Meta ---------- */
+function lerNum(chave, padrao) { try { const v = localStorage.getItem(chave); return v === null ? padrao : Number(v); } catch (e) { return padrao; } }
+function guardarNum(chave, v) { try { localStorage.setItem(chave, String(v)); } catch (e) {} }
 const CHAVE_META = 'painel-meta-valor';
-function lerMeta() { try { return Number(localStorage.getItem(CHAVE_META)) || 0; } catch (e) { return 0; } }
-function guardarMeta(v) { try { localStorage.setItem(CHAVE_META, String(v)); } catch (e) {} }
+const CHAVE_PRECO_EXTRA = 'painel-meta-preco-extra';
+const CHAVE_MEDIA_EXTRAS = 'painel-meta-media-extras';
 let capacidadeLivre = null;
 
 async function carregarCapacidade() {
@@ -834,41 +865,46 @@ async function carregarCapacidade() {
 }
 
 function desenharMeta() {
-  const box = $('meta-resumo');
-  box.innerHTML = '';
   const ativos = dados.filter((a) => a.status !== STATUS_CANC);
   const faturamentoAtual = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) + extrasValorDe(a)), 0);
   const ticketMedio = ativos.length ? ativos.reduce((s, a) => s + lerReais(a.valor_txt), 0) / ativos.length : 0;
-  const meta = lerMeta();
+
+  $('meta-horarios').textContent = capacidadeLivre === null ? '…' : capacidadeLivre;
+  $('meta-ticket').textContent = formatarReais(ticketMedio);
+  $('meta-faturamento').textContent = formatarReais(faturamentoAtual);
+
+  const meta = lerNum(CHAVE_META, 0);
+  const precoExtra = lerNum(CHAVE_PRECO_EXTRA, PRECO_FOTO_EXTRA);
+  const mediaExtras = lerNum(CHAVE_MEDIA_EXTRAS, 0);
+  const ticketAjustado = ticketMedio + mediaExtras * precoExtra;
   const falta = Math.max(0, meta - faturamentoAtual);
+  const sessoesNecessarias = falta > 0 && ticketAjustado > 0 ? Math.ceil(falta / ticketAjustado) : 0;
+  const fotosEstimadas = Math.round(sessoesNecessarias * mediaExtras);
 
-  function pill(t, v, classe) {
-    const p = document.createElement('span'); p.className = 'pill' + (classe ? ' ' + classe : '');
-    p.innerHTML = t + ': <b>' + v + '</b>';
-    box.appendChild(p);
-  }
-  pill('Horários livres até 19/12', capacidadeLivre === null ? '…' : capacidadeLivre);
-  pill('Ticket médio', formatarReais(ticketMedio));
-  pill('Faturamento atual (sessões já marcadas)', formatarReais(faturamentoAtual));
-
-  if (meta > 0) {
-    const sessoesNecessarias = ticketMedio > 0 ? Math.ceil(falta / ticketMedio) : 0;
-    const fotosNecessarias = Math.ceil(falta / PRECO_FOTO_EXTRA);
-    pill('Falta pra meta', formatarReais(falta), falta > 0 ? 'novo' : '');
-    if (falta > 0) {
-      pill('Sessões novas necessárias', sessoesNecessarias + ' (ticket médio)');
-      pill('Ou fotos extras necessárias', fotosNecessarias + ' (a R$ 14,90 cada)');
-      if (capacidadeLivre !== null) {
-        const cabe = sessoesNecessarias <= capacidadeLivre;
-        pill('Cabe nos horários livres?', cabe ? 'sim' : 'não — considere vender fotos extras', cabe ? '' : 'novo');
-      }
-    } else {
-      pill('Meta', 'já atingida ✓');
-    }
+  $('meta-ticket-ajustado').textContent = formatarReais(ticketAjustado);
+  $('meta-falta').textContent = formatarReais(falta);
+  $('meta-sessoes').textContent = sessoesNecessarias;
+  $('meta-fotos-estimadas').textContent = fotosEstimadas;
+  const cabeEl = $('meta-cabe');
+  if (meta <= 0) {
+    cabeEl.textContent = '—';
+    cabeEl.style.color = '';
+  } else if (falta === 0) {
+    cabeEl.textContent = 'meta já atingida ✓';
+    cabeEl.style.color = 'var(--green)';
+  } else if (capacidadeLivre === null) {
+    cabeEl.textContent = '…';
+    cabeEl.style.color = '';
+  } else {
+    const cabe = sessoesNecessarias <= capacidadeLivre;
+    cabeEl.textContent = cabe ? 'sim' : 'não, falta(m) ' + (sessoesNecessarias - capacidadeLivre);
+    cabeEl.style.color = cabe ? 'var(--green)' : 'var(--danger)';
   }
 }
 
-$('meta-valor').addEventListener('input', () => { guardarMeta($('meta-valor').value); desenharMeta(); });
+$('meta-valor').addEventListener('input', () => { guardarNum(CHAVE_META, $('meta-valor').value || 0); desenharMeta(); });
+$('meta-preco-extra').addEventListener('input', () => { guardarNum(CHAVE_PRECO_EXTRA, $('meta-preco-extra').value || 0); desenharMeta(); });
+$('meta-media-extras').addEventListener('input', () => { guardarNum(CHAVE_MEDIA_EXTRAS, $('meta-media-extras').value || 0); desenharMeta(); });
 
 /* já logada nesta aba? entra direto */
 if (lerSenha()) { senha = lerSenha(); entrarPainel(); }
