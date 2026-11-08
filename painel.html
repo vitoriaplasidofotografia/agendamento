@@ -84,6 +84,20 @@ a.zap:hover{text-decoration:underline}
 .tag.custo{color:var(--danger);border-color:var(--danger);background:rgba(255,77,106,.08)}
 .tag.prazo-digital{color:var(--cyan);border-color:var(--cyan-soft);background:rgba(54,241,224,.08)}
 .tag.prazo-fisico{color:var(--magenta);border-color:var(--magenta);background:rgba(255,79,216,.08)}
+.abas{display:flex;gap:8px;margin-bottom:10px}
+.aba{appearance:none;border:1px solid var(--line);background:#0a1120;color:var(--soft);border-radius:999px;padding:8px 16px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.aba.ativa{background:linear-gradient(90deg,var(--violet),var(--cyan));color:#061018;border-color:transparent}
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;margin-top:14px;scroll-snap-type:x proximity}
+.coluna{flex:0 0 240px;scroll-snap-align:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.coluna h3{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 2px;color:var(--violet);line-height:1.3}
+.coluna .contagem{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.kcard{background:#0a1120;border:1px solid var(--line);border-radius:10px;padding:10px}
+.kcard .nome{font-size:14px;font-weight:500;color:var(--ink)}
+.kcard .meta{font-family:var(--mono);font-size:11px;color:var(--soft);margin-top:4px}
+.kcard .mover{display:flex;justify-content:space-between;gap:6px;margin-top:8px}
+.kcard .mover button{appearance:none;border:1px solid var(--cyan-soft);background:transparent;color:var(--cyan);border-radius:8px;padding:5px 10px;font-family:var(--mono);font-size:12px;cursor:pointer}
+.kcard .mover button:disabled{opacity:.3;cursor:default}
+.kvazia{font-family:var(--mono);font-size:12px;color:var(--soft);font-style:italic;text-align:center;padding:10px 0}
 .erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
 .login{max-width:360px;margin:60px auto 0}
 .login h1{text-align:center;margin-bottom:12px;font-size:26px}
@@ -112,44 +126,56 @@ a.zap:hover{text-decoration:underline}
       <button class="sair" id="sair" type="button">Sair</button>
     </header>
 
-    <div class="card">
-      <div class="filtros">
-        <div>
-          <label for="periodo">Período</label>
-          <select id="periodo">
-            <option value="hoje">Hoje</option>
-            <option value="semana">Esta semana</option>
-            <option value="mes">Este mês</option>
-            <option value="30dias">Próximos 30 dias</option>
-            <option value="todos" selected>Todos os agendamentos</option>
-            <option value="custom">Escolher datas</option>
-          </select>
-        </div>
-        <div>
-          <button class="btn ghost" id="atualizar" type="button" style="width:100%">Atualizar</button>
-        </div>
-        <div></div>
-        <div class="faixa" id="faixa-custom">
-          <div><label for="de">De</label><input type="date" id="de"></div>
-          <div><label for="ate">Até</label><input type="date" id="ate"></div>
-        </div>
-      </div>
-      <div class="financas" id="financas">
-        <div class="fin pago"><div class="rotulo">Recebido (sinal confirmado)</div><div class="numero" id="fin-pago">R$ 0,00</div></div>
-        <div class="fin pendente"><div class="rotulo">Sinal aguardando confirmação</div><div class="numero" id="fin-pendente">R$ 0,00</div></div>
-        <div class="fin saldo"><div class="rotulo">Resta receber (no dia da sessão)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
-        <div class="fin fatura"><div class="rotulo">Faturamento (recebido + a receber)</div><div class="numero" id="fin-fatura">R$ 0,00</div></div>
-      </div>
-      <div class="custos" id="custos">
-        <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
-        <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
-      </div>
-      <div class="resumo" id="resumo"></div>
-      <p class="erro" id="erro-painel"></p>
-      <p class="atualiza" id="atualizado"></p>
+    <div class="abas">
+      <button class="aba ativa" id="aba-lista" type="button">Agendamentos</button>
+      <button class="aba" id="aba-kanban" type="button">Kanban</button>
     </div>
 
-    <div id="lista"></div>
+    <div id="view-lista">
+      <div class="card">
+        <div class="filtros">
+          <div>
+            <label for="periodo">Período</label>
+            <select id="periodo">
+              <option value="hoje">Hoje</option>
+              <option value="semana">Esta semana</option>
+              <option value="mes">Este mês</option>
+              <option value="30dias">Próximos 30 dias</option>
+              <option value="todos" selected>Todos os agendamentos</option>
+              <option value="custom">Escolher datas</option>
+            </select>
+          </div>
+          <div>
+            <button class="btn ghost" id="atualizar" type="button" style="width:100%">Atualizar</button>
+          </div>
+          <div></div>
+          <div class="faixa" id="faixa-custom">
+            <div><label for="de">De</label><input type="date" id="de"></div>
+            <div><label for="ate">Até</label><input type="date" id="ate"></div>
+          </div>
+        </div>
+        <div class="financas" id="financas">
+          <div class="fin pago"><div class="rotulo">Recebido (sinal confirmado)</div><div class="numero" id="fin-pago">R$ 0,00</div></div>
+          <div class="fin pendente"><div class="rotulo">Sinal aguardando confirmação</div><div class="numero" id="fin-pendente">R$ 0,00</div></div>
+          <div class="fin saldo"><div class="rotulo">Resta receber (no dia da sessão)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Faturamento (recebido + a receber)</div><div class="numero" id="fin-fatura">R$ 0,00</div></div>
+        </div>
+        <div class="custos" id="custos">
+          <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
+          <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
+        </div>
+        <div class="resumo" id="resumo"></div>
+        <p class="erro" id="erro-painel"></p>
+        <p class="atualiza" id="atualizado"></p>
+      </div>
+
+      <div id="lista"></div>
+    </div>
+
+    <div id="view-kanban" hidden>
+      <p class="atualiza" style="text-align:left;margin:0 0 10px">Cada cliente agendada entra na 1ª coluna. Use as setas pra mover pra etapa seguinte do processo de seleção, edição e entrega. O filtro de período acima também vale aqui.</p>
+      <div class="kanban" id="kanban"></div>
+    </div>
   </section>
 </div>
 
@@ -182,6 +208,18 @@ function dataLimite(dataIso, dias) {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 const NOVO_HORAS = 24;
+/* etapas do processo de seleção, edição e entrega — mesma ordem do checklist e da coluna "etapa" da planilha */
+const ETAPAS = [
+  'Transferência e organização dos arquivos',
+  'Organização no Lightroom',
+  'Pré-seleção das fotografias',
+  'Preparação das fotografias para a cliente',
+  'Organização na Alboom',
+  'Envio para a cliente escolher',
+  'Edição final',
+  'Entrega',
+  'Fotos impressas + Cobrança final',
+];
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => (n < 10 ? '0' : '') + n;
@@ -289,6 +327,53 @@ function desenhar() {
     }
     lista.appendChild(linha(a));
   });
+
+  desenharKanban();
+}
+
+function desenharKanban() {
+  const board = $('kanban');
+  board.innerHTML = '';
+  const ativos = dados.filter((a) => a.status !== STATUS_CANC);
+  ETAPAS.forEach((nome, idx) => {
+    const etapa = idx + 1;
+    const col = document.createElement('div'); col.className = 'coluna';
+    const itens = ativos.filter((a) => (a.etapa || 1) === etapa);
+    col.innerHTML = '<h3>' + (etapa) + '. ' + nome + '</h3><div class="contagem">' + itens.length + ' cliente(s)</div>';
+    if (!itens.length) {
+      const v = document.createElement('div'); v.className = 'kvazia'; v.textContent = 'Vazio';
+      col.appendChild(v);
+    }
+    itens.forEach((a) => col.appendChild(kcard(a, etapa)));
+    board.appendChild(col);
+  });
+}
+
+function kcard(a, etapa) {
+  const el = document.createElement('div'); el.className = 'kcard';
+  const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.textContent = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' · ' + a.inicio + ' · ' + a.pacote;
+  const mover = document.createElement('div'); mover.className = 'mover';
+  const ant = document.createElement('button'); ant.type = 'button'; ant.textContent = '‹ voltar';
+  ant.disabled = etapa === 1;
+  ant.addEventListener('click', () => moverEtapa(a, etapa - 1));
+  const prox = document.createElement('button'); prox.type = 'button'; prox.textContent = 'avançar ›';
+  prox.disabled = etapa === ETAPAS.length;
+  prox.addEventListener('click', () => moverEtapa(a, etapa + 1));
+  mover.appendChild(ant); mover.appendChild(prox);
+  el.appendChild(nome); el.appendChild(meta); el.appendChild(mover);
+  return el;
+}
+
+async function moverEtapa(a, novaEtapa) {
+  try {
+    const r = await chamar({ acao: 'etapa', senha: senha, id: a.id, etapa: novaEtapa });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; return; }
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui mover. Tente de novo.';
+  }
 }
 
 function linha(a) {
@@ -392,6 +477,14 @@ $('periodo').addEventListener('change', () => {
 });
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
+$('aba-lista').addEventListener('click', () => {
+  $('aba-lista').classList.add('ativa'); $('aba-kanban').classList.remove('ativa');
+  $('view-lista').hidden = false; $('view-kanban').hidden = true;
+});
+$('aba-kanban').addEventListener('click', () => {
+  $('aba-kanban').classList.add('ativa'); $('aba-lista').classList.remove('ativa');
+  $('view-kanban').hidden = false; $('view-lista').hidden = true;
+});
 
 /* já logada nesta aba? entra direto */
 if (lerSenha()) { senha = lerSenha(); entrarPainel(); }
