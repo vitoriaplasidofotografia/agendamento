@@ -233,6 +233,12 @@ function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOT
 /* prazos de entrega, em dias corridos após a sessão */
 const PRAZO_DIGITAL_DIAS = 6;
 const PRAZO_FISICO_DIAS = 10;
+/* enquanto o cliente não chega na última etapa (impressão), o prazo do físico conta da sessão;
+   quando entra na última etapa, recomeça a contar 10 dias a partir do dia em que entrou nela */
+function baseFisico(a) {
+  if ((a.etapa || 1) === ETAPAS.length && a.etapa_em) return a.etapa_em;
+  return a.data;
+}
 function dataLimite(dataIso, dias) {
   const d = new Date(dataIso + 'T12:00:00');
   d.setDate(d.getDate() + dias);
@@ -536,7 +542,7 @@ function abrirModal(a, etapa) {
   if (a.status !== STATUS_CANC) {
     html += '<div class="modal-secao">Prazos de entrega</div>';
     html += linhaModal('Arquivos digitais até', dataLimite(a.data, PRAZO_DIGITAL_DIAS));
-    html += linhaModal('Fotos impressas até', dataLimite(a.data, PRAZO_FISICO_DIAS));
+    html += linhaModal('Fotos impressas até', dataLimite(baseFisico(a), PRAZO_FISICO_DIAS));
   }
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
@@ -593,7 +599,7 @@ function linha(a) {
     const pd = document.createElement('span'); pd.className = 'tag prazo-digital';
     pd.textContent = 'digital até ' + dataLimite(a.data, PRAZO_DIGITAL_DIAS);
     const pf = document.createElement('span'); pf.className = 'tag prazo-fisico';
-    pf.textContent = 'impresso até ' + dataLimite(a.data, PRAZO_FISICO_DIAS);
+    pf.textContent = 'impresso até ' + dataLimite(baseFisico(a), PRAZO_FISICO_DIAS);
     prazos.appendChild(pd); prazos.appendChild(pf);
     info.appendChild(prazos);
   }
