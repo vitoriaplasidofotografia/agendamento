@@ -90,7 +90,7 @@ a.zap:hover{text-decoration:underline}
 .aba:hover{background:var(--bg2)}
 .aba.ativa{background:var(--blue);color:#fff;border-color:var(--blue)}
 #view-kanban{max-width:none;width:100vw;margin-left:calc(50% - 50vw);padding:0 24px;box-sizing:border-box}
-.kanban{display:grid;grid-template-columns:repeat(10,1fr);gap:10px;margin-top:14px;align-items:start}
+.kanban{display:grid;grid-template-columns:repeat(11,1fr);gap:8px;margin-top:14px;align-items:start}
 .coluna{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
 @media (max-width:1400px){.kanban{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:760px){.kanban{grid-template-columns:1fr}#view-kanban{padding:0 16px}}
@@ -241,6 +241,7 @@ function dataLimite(dataIso, dias) {
 const NOVO_HORAS = 24;
 /* etapas do processo de seleção, edição e entrega — mesma ordem do checklist e da coluna "etapa" da planilha */
 const ETAPAS = [
+  'Realização da sessão',
   'Transferência e organização dos arquivos',
   'Organização no Lightroom',
   'Pré-seleção das fotografias',
@@ -254,6 +255,12 @@ const ETAPAS = [
 ];
 /* checklist completo de cada etapa (do PDF "Processo de seleção, edição e entrega"), pra mostrar no hover da coluna */
 const ETAPA_CHECKLIST = [
+  [
+    ['Organizar cenário.', '—'],
+    ['Preparar mesa aparador.', '—'],
+    ['Receber cliente.', '—'],
+    ['Realizar a sessão.', '—'],
+  ],
   [
     ['Retirar o cartão SD da câmera.', 'Vitória'],
     ['Copiar todas as fotografias RAW para o computador.', 'Bryan'],
@@ -318,8 +325,8 @@ const ETAPA_CHECKLIST = [
   ],
   [
     ['Enviar arquivos selecionados para o Laboratório pelo PC.', 'Bryan'],
-    ['Buscar materiais em Novo Hamburgo.', '—'],
-    ['Embalar e organizar a entrega.', '—'],
+    ['Buscar materiais em Novo Hamburgo.', 'Bryan'],
+    ['Embalar e organizar a entrega.', 'Vitória'],
   ],
 ];
 
@@ -445,7 +452,7 @@ function desenharKanban() {
     const cabeca = document.createElement('div'); cabeca.className = 'coluna-cabeca';
     const titulo = document.createElement('h3'); titulo.textContent = etapa + '. ' + nome;
     const contagem = document.createElement('div'); contagem.className = 'contagem'; contagem.textContent = itens.length + ' cliente(s)';
-    const checklist = document.createElement('div'); checklist.className = 'checklist' + (etapa >= 8 ? ' alinhar-direita' : '');
+    const checklist = document.createElement('div'); checklist.className = 'checklist' + (etapa >= 9 ? ' alinhar-direita' : '');
     const ul = document.createElement('ul');
     (ETAPA_CHECKLIST[idx] || []).forEach(([texto, quem]) => {
       const li = document.createElement('li');
