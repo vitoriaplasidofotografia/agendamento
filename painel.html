@@ -157,32 +157,43 @@ a.zap:hover{text-decoration:underline}
 
     <div class="abas">
       <button class="aba ativa" id="aba-lista" type="button">Agendamentos</button>
+      <button class="aba" id="aba-financeiro" type="button">Financeiro</button>
       <button class="aba" id="aba-kanban" type="button">Kanban</button>
     </div>
 
-    <div id="view-lista">
-      <div class="card">
-        <div class="filtros">
-          <div>
-            <label for="periodo">Período</label>
-            <select id="periodo">
-              <option value="hoje">Hoje</option>
-              <option value="semana">Esta semana</option>
-              <option value="mes">Este mês</option>
-              <option value="30dias">Próximos 30 dias</option>
-              <option value="todos" selected>Todos os agendamentos</option>
-              <option value="custom">Escolher datas</option>
-            </select>
-          </div>
-          <div>
-            <button class="btn ghost" id="atualizar" type="button" style="width:100%">Atualizar</button>
-          </div>
-          <div></div>
-          <div class="faixa" id="faixa-custom">
-            <div><label for="de">De</label><input type="date" id="de"></div>
-            <div><label for="ate">Até</label><input type="date" id="ate"></div>
-          </div>
+    <div class="card">
+      <div class="filtros">
+        <div>
+          <label for="periodo">Período</label>
+          <select id="periodo">
+            <option value="hoje">Hoje</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mês</option>
+            <option value="30dias">Próximos 30 dias</option>
+            <option value="todos" selected>Todos os agendamentos</option>
+            <option value="custom">Escolher datas</option>
+          </select>
         </div>
+        <div>
+          <button class="btn ghost" id="atualizar" type="button" style="width:100%">Atualizar</button>
+        </div>
+        <div></div>
+        <div class="faixa" id="faixa-custom">
+          <div><label for="de">De</label><input type="date" id="de"></div>
+          <div><label for="ate">Até</label><input type="date" id="ate"></div>
+        </div>
+      </div>
+      <div class="resumo" id="resumo"></div>
+      <p class="erro" id="erro-painel"></p>
+      <p class="atualiza" id="atualizado"></p>
+    </div>
+
+    <div id="view-lista">
+      <div id="lista"></div>
+    </div>
+
+    <div id="view-financeiro" hidden>
+      <div class="card">
         <div class="financas" id="financas">
           <div class="fin pago"><div class="rotulo">Recebido (sinal confirmado)</div><div class="numero" id="fin-pago">R$ 0,00</div></div>
           <div class="fin pendente"><div class="rotulo">Sinal aguardando confirmação</div><div class="numero" id="fin-pendente">R$ 0,00</div></div>
@@ -193,12 +204,8 @@ a.zap:hover{text-decoration:underline}
           <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
           <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
         </div>
-        <div class="resumo" id="resumo"></div>
-        <p class="erro" id="erro-painel"></p>
-        <p class="atualiza" id="atualizado"></p>
       </div>
-
-      <div id="lista"></div>
+      <div id="financeiro-lista"></div>
     </div>
 
     <div id="view-kanban" hidden>
@@ -445,7 +452,27 @@ function desenhar() {
     lista.appendChild(linha(a));
   });
 
+  desenharFinanceiro();
   desenharKanban();
+}
+
+function desenharFinanceiro() {
+  const lista = $('financeiro-lista');
+  lista.innerHTML = '';
+  if (!dados.length) {
+    lista.innerHTML = '<p class="vazio">Nenhum agendamento neste período.</p>';
+    return;
+  }
+  let diaAtual = '';
+  dados.forEach((a) => {
+    if (a.data !== diaAtual) {
+      diaAtual = a.data;
+      const h = document.createElement('div'); h.className = 'dia';
+      h.textContent = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+      lista.appendChild(h);
+    }
+    lista.appendChild(linhaFinanceira(a));
+  });
 }
 
 function desenharKanban() {
@@ -567,6 +594,8 @@ function linha(a) {
 
   const info = document.createElement('div');
   const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
+  const pacote = document.createElement('div'); pacote.className = 'meta';
+  pacote.textContent = 'Pacote ' + a.pacote + (a.email ? ' · ' + a.email : '');
   const meta = document.createElement('div'); meta.className = 'meta';
   const numero = a.whatsapp.replace(/\D/g, '');
   const zap = document.createElement('a'); zap.className = 'zap'; zap.target = '_blank'; zap.rel = 'noopener';
@@ -574,29 +603,10 @@ function linha(a) {
   meta.appendChild(zap);
   const tag = document.createElement('span');
   tag.className = 'tag ' + (a.status === STATUS_OK ? 'ok' : a.status === STATUS_CANC ? 'canc' : 'aguard');
-  tag.textContent = a.status;
+  tag.textContent = a.status === STATUS_OK ? 'sinal pago' : a.status === STATUS_CANC ? 'cancelado' : 'sinal pendente';
   meta.appendChild(tag);
   if (ehNovo(a)) { const n = document.createElement('span'); n.className = 'tag novo'; n.textContent = 'novo'; meta.appendChild(n); }
-  if (a.status !== STATUS_CANC) {
-    const resta = document.createElement('span'); resta.className = 'tag resta';
-    resta.textContent = 'resta ' + formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt));
-    meta.appendChild(resta);
-    const custo = document.createElement('span'); custo.className = 'tag custo';
-    custo.textContent = 'custo ' + formatarReais(custoDe(a));
-    meta.appendChild(custo);
-  }
-  const pacote = document.createElement('div'); pacote.className = 'meta';
-  pacote.textContent = 'Pacote ' + a.pacote + ' · ' + a.valor_txt + ' · sinal ' + a.sinal_txt + ' · cenário ' + (a.cenario || '—') + ' · ' + (a.pessoas || '?') + ' pessoa(s)' + (a.email ? ' · ' + a.email : '');
   info.appendChild(nome); info.appendChild(pacote); info.appendChild(meta);
-  if (a.status !== STATUS_CANC) {
-    const prazos = document.createElement('div'); prazos.className = 'meta';
-    const pd = document.createElement('span'); pd.className = 'tag prazo-digital';
-    pd.textContent = 'digital até ' + dataLimite(a.data, PRAZO_DIGITAL_DIAS);
-    const pf = document.createElement('span'); pf.className = 'tag prazo-fisico';
-    pf.textContent = 'impresso até ' + dataLimite(baseFisico(a), PRAZO_FISICO_DIAS);
-    prazos.appendChild(pd); prazos.appendChild(pf);
-    info.appendChild(prazos);
-  }
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
   if (a.status !== STATUS_OK && a.status !== STATUS_CANC) {
@@ -612,6 +622,59 @@ function linha(a) {
 
   el.appendChild(hora); el.appendChild(info); el.appendChild(acoes);
   return el;
+}
+
+function linhaFinanceira(a) {
+  const el = document.createElement('div');
+  el.className = 'item';
+
+  const hora = document.createElement('div'); hora.className = 'hora'; hora.textContent = a.inicio;
+
+  const info = document.createElement('div');
+  const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
+  const linha1 = document.createElement('div'); linha1.className = 'meta';
+  linha1.textContent = 'Pacote ' + a.pacote + ' · valor ' + a.valor_txt + ' · sinal ' + a.sinal_txt;
+  const linha2 = document.createElement('div'); linha2.className = 'meta';
+  const tagSinal = document.createElement('span');
+  tagSinal.className = 'tag ' + (a.status === STATUS_OK ? 'ok' : a.status === STATUS_CANC ? 'canc' : 'aguard');
+  tagSinal.textContent = a.status === STATUS_OK ? 'sinal pago' : a.status === STATUS_CANC ? 'cancelado' : 'sinal pendente';
+  linha2.appendChild(tagSinal);
+  if (a.status !== STATUS_CANC) {
+    const tagSaldo = document.createElement('span');
+    tagSaldo.className = 'tag ' + (a.saldo_pago ? 'ok' : 'aguard');
+    tagSaldo.textContent = a.saldo_pago ? '70% pago' : '70% pendente';
+    linha2.appendChild(tagSaldo);
+    const resta = document.createElement('span'); resta.className = 'tag resta';
+    resta.textContent = 'resta ' + formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt));
+    linha2.appendChild(resta);
+    const custo = document.createElement('span'); custo.className = 'tag custo';
+    custo.textContent = 'custo ' + formatarReais(custoDe(a));
+    linha2.appendChild(custo);
+  }
+  info.appendChild(nome); info.appendChild(linha1); info.appendChild(linha2);
+
+  const acoes = document.createElement('div'); acoes.className = 'acoes';
+  if (a.status !== STATUS_CANC) {
+    const s = document.createElement('button'); s.className = a.saldo_pago ? 'btn ghost' : 'btn prim'; s.type = 'button';
+    s.textContent = a.saldo_pago ? 'Desfazer 70%' : 'Marcar 70% pago';
+    s.addEventListener('click', () => mudarSaldo(a, !a.saldo_pago, s));
+    acoes.appendChild(s);
+  }
+
+  el.appendChild(hora); el.appendChild(info); el.appendChild(acoes);
+  return el;
+}
+
+async function mudarSaldo(a, pago, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'saldo', senha: senha, id: a.id, pago: pago });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; botao.disabled = false; return; }
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    botao.disabled = false;
+  }
 }
 
 async function mudar(a, novo, botao) {
@@ -660,14 +723,17 @@ $('periodo').addEventListener('change', () => {
 });
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
-$('aba-lista').addEventListener('click', () => {
-  $('aba-lista').classList.add('ativa'); $('aba-kanban').classList.remove('ativa');
-  $('view-lista').hidden = false; $('view-kanban').hidden = true;
-});
-$('aba-kanban').addEventListener('click', () => {
-  $('aba-kanban').classList.add('ativa'); $('aba-lista').classList.remove('ativa');
-  $('view-kanban').hidden = false; $('view-lista').hidden = true;
-});
+function trocarAba(ativa) {
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', kanban: 'aba-kanban' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', kanban: 'view-kanban' };
+  Object.keys(abas).forEach((k) => {
+    $(abas[k]).classList.toggle('ativa', k === ativa);
+    $(views[k]).hidden = k !== ativa;
+  });
+}
+$('aba-lista').addEventListener('click', () => trocarAba('lista'));
+$('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
+$('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
 
 /* já logada nesta aba? entra direto */
 if (lerSenha()) { senha = lerSenha(); entrarPainel(); }
