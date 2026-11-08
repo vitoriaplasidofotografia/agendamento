@@ -96,7 +96,10 @@ a.zap:hover{text-decoration:underline}
 @media (max-width:760px){.kanban{grid-template-columns:1fr}#view-kanban{padding:0 16px}}
 .coluna h3{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 2px;color:var(--ink);line-height:1.3}
 .coluna .contagem{font-size:11px;color:var(--soft)}
-.kcard{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px;box-shadow:0 1px 2px rgba(15,15,15,.04)}
+.coluna.sobre{border-color:var(--blue);background:var(--blue-soft)}
+.kcard{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px;box-shadow:0 1px 2px rgba(15,15,15,.04);cursor:grab}
+.kcard.arrastando{opacity:.4}
+.soltar-aqui{min-height:6px}
 .kcard .nome{font-size:14px;font-weight:600;color:var(--ink)}
 .kcard .meta{font-size:11px;color:var(--soft);margin-top:4px}
 .kcard .mover{display:flex;justify-content:space-between;gap:6px;margin-top:8px}
@@ -343,20 +346,38 @@ function desenharKanban() {
   const ativos = dados.filter((a) => a.status !== STATUS_CANC);
   ETAPAS.forEach((nome, idx) => {
     const etapa = idx + 1;
-    const col = document.createElement('div'); col.className = 'coluna';
+    const col = document.createElement('div'); col.className = 'coluna'; col.dataset.etapa = etapa;
     const itens = ativos.filter((a) => (a.etapa || 1) === etapa);
-    col.innerHTML = '<h3>' + (etapa) + '. ' + nome + '</h3><div class="contagem">' + itens.length + ' cliente(s)</div>';
+    const titulo = document.createElement('h3'); titulo.textContent = etapa + '. ' + nome;
+    const contagem = document.createElement('div'); contagem.className = 'contagem'; contagem.textContent = itens.length + ' cliente(s)';
+    col.appendChild(titulo); col.appendChild(contagem);
+    const soltar = document.createElement('div'); soltar.className = 'soltar-aqui';
     if (!itens.length) {
       const v = document.createElement('div'); v.className = 'kvazia'; v.textContent = 'Vazio';
       col.appendChild(v);
     }
     itens.forEach((a) => col.appendChild(kcard(a, etapa)));
+    col.appendChild(soltar);
+
+    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('sobre'); });
+    col.addEventListener('dragleave', () => col.classList.remove('sobre'));
+    col.addEventListener('drop', (e) => {
+      e.preventDefault();
+      col.classList.remove('sobre');
+      const id = e.dataTransfer.getData('text/plain');
+      const a = dados.find((x) => String(x.id) === id);
+      if (a && (a.etapa || 1) !== etapa) moverEtapa(a, etapa);
+    });
+
     board.appendChild(col);
   });
 }
 
 function kcard(a, etapa) {
   const el = document.createElement('div'); el.className = 'kcard';
+  el.draggable = true;
+  el.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', String(a.id)); el.classList.add('arrastando'); });
+  el.addEventListener('dragend', () => el.classList.remove('arrastando'));
   const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
   const meta = document.createElement('div'); meta.className = 'meta';
   meta.textContent = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' · ' + a.inicio + ' · ' + a.pacote;
