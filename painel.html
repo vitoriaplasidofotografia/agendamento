@@ -116,10 +116,6 @@ a.zap:hover{text-decoration:underline}
 .soltar-aqui{min-height:6px}
 .kcard .nome{font-size:14px;font-weight:600;color:var(--ink)}
 .kcard .meta{font-size:11px;color:var(--soft);margin-top:4px}
-.kcard .mover{display:flex;justify-content:space-between;gap:6px;margin-top:8px}
-.kcard .mover button{appearance:none;border:1px solid var(--line);background:#fff;color:var(--blue);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
-.kcard .mover button:hover{background:var(--blue-soft)}
-.kcard .mover button:disabled{opacity:.3;cursor:default}
 .kvazia{font-size:12px;color:var(--soft);font-style:italic;text-align:center;padding:10px 0}
 .erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
 .login{max-width:360px;margin:60px auto 0}
@@ -509,15 +505,7 @@ function kcard(a, etapa) {
   const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
   const meta = document.createElement('div'); meta.className = 'meta';
   meta.textContent = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' · ' + a.inicio + ' · ' + a.pacote;
-  const mover = document.createElement('div'); mover.className = 'mover';
-  const ant = document.createElement('button'); ant.type = 'button'; ant.textContent = '‹ voltar';
-  ant.disabled = etapa === 1;
-  ant.addEventListener('click', (e) => { e.stopPropagation(); moverEtapa(a, etapa - 1); });
-  const prox = document.createElement('button'); prox.type = 'button'; prox.textContent = 'avançar ›';
-  prox.disabled = etapa === ETAPAS.length;
-  prox.addEventListener('click', (e) => { e.stopPropagation(); moverEtapa(a, etapa + 1); });
-  mover.appendChild(ant); mover.appendChild(prox);
-  el.appendChild(nome); el.appendChild(meta); el.appendChild(mover);
+  el.appendChild(nome); el.appendChild(meta);
   return el;
 }
 
