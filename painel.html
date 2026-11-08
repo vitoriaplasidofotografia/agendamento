@@ -97,6 +97,14 @@ a.zap:hover{text-decoration:underline}
 .coluna h3{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 2px;color:var(--ink);line-height:1.3}
 .coluna .contagem{font-size:11px;color:var(--soft)}
 .coluna.sobre{border-color:var(--blue);background:var(--blue-soft)}
+.coluna-cabeca{position:relative}
+.checklist{position:absolute;top:100%;left:0;z-index:40;width:280px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;box-shadow:0 8px 24px rgba(15,15,15,.14);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .12s,transform .12s;pointer-events:none}
+.checklist.alinhar-direita{left:auto;right:0}
+.coluna-cabeca:hover .checklist{opacity:1;visibility:visible;transform:translateY(0)}
+.checklist strong{font-family:var(--disp);font-size:12px;color:var(--ink);display:block;margin-bottom:6px}
+.checklist ul{margin:0;padding-left:16px}
+.checklist li{font-size:12px;color:var(--ink);line-height:1.45;margin-bottom:6px}
+.checklist li span{color:var(--soft);font-size:11px}
 .kcard{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px;box-shadow:0 1px 2px rgba(15,15,15,.04);cursor:grab}
 .kcard.arrastando{opacity:.4}
 .soltar-aqui{min-height:6px}
@@ -229,6 +237,72 @@ const ETAPAS = [
   'Entrega',
   'Fotos impressas + Cobrança final',
 ];
+/* checklist completo de cada etapa (do PDF "Processo de seleção, edição e entrega"), pra mostrar no hover da coluna */
+const ETAPA_CHECKLIST = [
+  [
+    ['Retirar o cartão SD da câmera.', 'Vitória'],
+    ['Copiar todas as fotografias RAW para o computador.', 'Bryan'],
+    ['Criar uma pasta com o nome da cliente.', 'Bryan'],
+    ['Manter uma cópia de segurança dos arquivos originais.', 'Bryan'],
+  ],
+  [
+    ['Criar uma pasta com o nome da cliente.', 'Bryan'],
+    ['Criar dois álbuns: Para selecionar e Para editar.', 'Bryan'],
+    ['Colocar todas as fotografias no álbum Para selecionar.', 'Bryan'],
+  ],
+  [
+    ['Abrir o Lightroom pelo celular.', 'Vitória'],
+    ['Analisar as fotografias com calma.', 'Vitória'],
+    ['Marcar as imagens que deseja manter.', 'Vitória'],
+    ['Rejeitar ou arquivar as imagens que não serão utilizadas.', 'Vitória'],
+    ['Conferir a seleção final pelo computador/celular.', 'Vitória'],
+  ],
+  [
+    ['Fazer uma edição básica de cor e exposição nas imagens que serão apresentadas.', 'Vitória'],
+    ['Criar uma pasta no computador com o nome do cliente dentro da pasta ALBOOM.', 'Bryan'],
+    ['Baixar as fotografias aprovadas no Lightroom em JPEG.', 'Bryan'],
+    ['Extrair essas imagens para o álbum do cliente no PC.', 'Bryan'],
+  ],
+  [
+    ['Cadastrar o cliente na plataforma pelo Notebook.', 'Vitória'],
+    ['Inserir nome, e-mail e WhatsApp pelo Notebook.', 'Vitória'],
+    ['Criar um novo projeto pelo Notebook.', 'Vitória'],
+    ['Selecionar a opção Seleção e Venda pelo Notebook.', 'Vitória'],
+    ['Nomear o projeto pelo Notebook.', 'Vitória'],
+    ['Escolher o preset pelo Notebook.', 'Vitória'],
+    ['Criar a categoria de fotografias pelo Notebook.', 'Vitória'],
+    ['Enviar os JPEGs para a galeria pelo PC do projeto.', 'Bryan'],
+  ],
+  [
+    ['Copiar o link da galeria.', 'Vitória'],
+    ['Enviar o link pelo WhatsApp.', 'Vitória'],
+    ['Explicar quantas fotografias estão incluídas no pacote.', 'Vitória'],
+    ['Informar o valor de R$ 14,90 por fotografia extra.', 'Vitória'],
+    ['Orientar como selecionar as imagens adicionais.', 'Vitória'],
+    ['Aguardar a seleção e confirmar eventual compra de extras.', 'Vitória'],
+  ],
+  [
+    ['Conferir a seleção definitiva da cliente no alboom pelo Notebook.', 'Vitória'],
+    ['Identificar as fotografias extras adquiridas no alboom pelo Notebook.', 'Vitória'],
+    ['Enviar essas imagens para o álbum "editar" dentro da pasta do cliente no Lightroom.', 'Vitória'],
+    ['Fazer a edição final dos arquivos correspondentes pelo celular.', 'Vitória'],
+  ],
+  [
+    ['Criar álbum do cliente dentro do Google Fotos.', 'Bryan'],
+    ['Exportar as fotografias finais em alta qualidade para o Google Fotos.', 'Bryan'],
+    ['Conferir todos os arquivos.', 'Bryan'],
+    ['Organizar a entrega digital.', 'Bryan'],
+    ['Enviar o link das fotografias finais para o cliente do Google Fotos.', 'Vitória'],
+    ['Exemplificar como poderá fazer a exportação para a sua galeria.', 'Vitória'],
+  ],
+  [
+    ['Solicitar quais serão as imagens escolhidas para impressão.', 'Vitória'],
+    ['Solicitar quais serão as imagens escolhidas para impressão Polaroid e bolinha.', 'Vitória'],
+    ['Explicar que o custo do frete e a retirada ficam para o cliente.', 'Vitória'],
+    ['Explicar o tempo de entrega.', 'Vitória'],
+    ['Solicitar o pagamento dos outros 70% do pacote + eventuais fotos extras.', 'Vitória'],
+  ],
+];
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => (n < 10 ? '0' : '') + n;
@@ -348,9 +422,24 @@ function desenharKanban() {
     const etapa = idx + 1;
     const col = document.createElement('div'); col.className = 'coluna'; col.dataset.etapa = etapa;
     const itens = ativos.filter((a) => (a.etapa || 1) === etapa);
+
+    const cabeca = document.createElement('div'); cabeca.className = 'coluna-cabeca';
     const titulo = document.createElement('h3'); titulo.textContent = etapa + '. ' + nome;
     const contagem = document.createElement('div'); contagem.className = 'contagem'; contagem.textContent = itens.length + ' cliente(s)';
-    col.appendChild(titulo); col.appendChild(contagem);
+    const checklist = document.createElement('div'); checklist.className = 'checklist' + (etapa >= 7 ? ' alinhar-direita' : '');
+    const ul = document.createElement('ul');
+    (ETAPA_CHECKLIST[idx] || []).forEach(([texto, quem]) => {
+      const li = document.createElement('li');
+      li.textContent = texto + ' ';
+      const span = document.createElement('span'); span.textContent = '(' + quem + ')';
+      li.appendChild(span);
+      ul.appendChild(li);
+    });
+    checklist.innerHTML = '<strong>Checklist — ' + nome + '</strong>';
+    checklist.appendChild(ul);
+    cabeca.appendChild(titulo); cabeca.appendChild(contagem); cabeca.appendChild(checklist);
+    col.appendChild(cabeca);
+
     const soltar = document.createElement('div'); soltar.className = 'soltar-aqui';
     if (!itens.length) {
       const v = document.createElement('div'); v.className = 'kvazia'; v.textContent = 'Vazio';
