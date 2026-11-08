@@ -604,7 +604,9 @@ function abrirModal(a, etapa) {
   html += linhaModal('Valor total', a.valor_txt);
   html += linhaModal('Sinal', a.sinal_txt + ' (' + a.status + ')');
   if (a.status !== STATUS_CANC) {
-    html += linhaModal('Resta receber', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt)));
+    html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
+    html += linhaModal('Fotos extras', (a.fotos_extras || 0) + ' · ' + formatarReais(extrasValorDe(a)));
+    html += linhaModal('Resta receber', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt) + extrasValorDe(a)));
     html += linhaModal('Custo estimado', formatarReais(custoDe(a)));
   }
   if (a.status !== STATUS_CANC) {
