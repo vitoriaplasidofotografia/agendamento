@@ -49,6 +49,9 @@ h1{font-family:var(--script);font-weight:400;color:var(--gold);font-size:46px;li
 .pac .linha{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:4px;color:var(--soft);font-size:14px}
 .pac .valor{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--ink)}
 .pac .sinal{font-size:13px;color:var(--moss-deep);background:#EEF3EE;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.pac .inclui{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px dashed var(--line);display:grid;gap:6px}
+.pac .inclui li{font-size:13.5px;color:var(--soft);display:flex;gap:7px;align-items:baseline}
+.pac .inclui li::before{content:"\2726";color:var(--gold-soft);font-size:10px;line-height:1;position:relative;top:-1px}
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 .slot{appearance:none;border:1px solid var(--gold-soft);background:#fff;color:var(--moss-deep);border-radius:999px;padding:13px 10px;font-size:17px;cursor:pointer}
 .slot:hover{background:var(--moss);color:#fff;border-color:var(--moss)}
@@ -219,6 +222,12 @@ let diasLivres = [];
 let pacotes = [];
 let escolha = { pacote: null, cenario: '', data: '', hora: '' };
 let whatsappVitoria = '5551996505837';
+/* mini resumo do que está incluso em cada pacote, mostrado abaixo do valor */
+const INCLUI_PACOTE = {
+  'Laço': ['6 fotografias digitais', 'Galeria online para escolher em casa'],
+  'Presente': ['10 fotografias digitais', '5 fotos impressas (15x21)', '1 ímã de geladeira (estilo polaroid)', 'Galeria online para escolher em casa'],
+  'Bênção': ['15 fotografias digitais', '10 fotos impressas (15x21)', '1 bolinha de Natal com foto', '1 ímã de geladeira (estilo polaroid)', 'Galeria online para escolher em casa'],
+};
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => (n < 10 ? '0' : '') + n;
@@ -260,6 +269,15 @@ function desenharPacotes() {
     const s = document.createElement('span'); s.className = 'sinal'; s.textContent = 'Sinal 30%: ' + p.sinal_txt;
     linha.appendChild(v); linha.appendChild(s);
     b.appendChild(nome); b.appendChild(linha);
+    const inclui = INCLUI_PACOTE[p.nome];
+    if (inclui && inclui.length) {
+      const ul = document.createElement('ul'); ul.className = 'inclui';
+      inclui.forEach((item) => {
+        const li = document.createElement('li'); li.textContent = item;
+        ul.appendChild(li);
+      });
+      b.appendChild(ul);
+    }
     b.addEventListener('click', () => escolherPacote(p));
     lista.appendChild(b);
   });
