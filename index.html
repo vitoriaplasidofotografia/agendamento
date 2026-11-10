@@ -38,7 +38,7 @@ h1{font-family:var(--script);font-weight:400;color:var(--gold);font-size:46px;li
 .wd{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);padding:4px 0}
 .day{appearance:none;border:1px solid transparent;background:transparent;border-radius:10px;aspect-ratio:1;font-size:16px;color:var(--ink);cursor:pointer;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .day.off{color:#B9B2A4;cursor:default}
-.day.off .tag-dia{font-size:7px;letter-spacing:.02em;text-transform:uppercase;color:var(--danger);line-height:1;font-family:var(--sans)}
+.day.off .tag-dia{font-size:6px;letter-spacing:.01em;text-transform:uppercase;color:var(--danger);line-height:1.1;font-family:var(--sans);white-space:normal;text-align:center;padding:0 1px}
 .day.free{background:#fff;border-color:var(--line)}
 .day.free:hover{border-color:var(--gold-soft)}
 .day.empty{visibility:hidden}
@@ -258,6 +258,8 @@ async function api(params) {
    cada recarregamento. */
 const ESCASSEZ_ATIVA = true;
 const ESCASSEZ_MIN_LIVRES = 2; // mínimo de horários que continuam clicáveis por dia
+const ULTIMA_SEMANA_DE = '2026-12-13'; // última semana antes do limite da agenda: aparece sempre "reservado"
+const ULTIMA_SEMANA_ATE = '2026-12-19';
 
 function hashTexto(s) {
   let h = 0;
@@ -327,13 +329,22 @@ function desenharCalendario() {
     const v = document.createElement('div'); v.className = 'day empty'; grid.appendChild(v);
   }
   const total = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 0).getDate();
+  const hoje = iso(new Date());
   for (let d = 1; d <= total; d++) {
-    const s = iso(new Date(mesAtual.getFullYear(), mesAtual.getMonth(), d));
+    const dataObj = new Date(mesAtual.getFullYear(), mesAtual.getMonth(), d);
+    const s = iso(dataObj);
+    if (s > ULTIMA_SEMANA_ATE) {
+      const v = document.createElement('div'); v.className = 'day empty'; grid.appendChild(v);
+      continue;
+    }
     const b = document.createElement('button');
     b.type = 'button';
     const num = document.createElement('span'); num.className = 'num'; num.textContent = d;
     b.appendChild(num);
-    const livre = diasLivres.indexOf(s) !== -1;
+    const passado = s < hoje;
+    const domingo = dataObj.getDay() === 0;
+    const ultimaSemana = s >= ULTIMA_SEMANA_DE && s <= ULTIMA_SEMANA_ATE;
+    const livre = !passado && !domingo && !ultimaSemana && diasLivres.indexOf(s) !== -1;
     b.className = 'day ' + (livre ? 'free' : 'off');
     b.disabled = !livre;
     if (livre) {
@@ -341,13 +352,15 @@ function desenharCalendario() {
     } else {
       const tag = document.createElement('span');
       tag.className = 'tag-dia';
-      tag.textContent = 'reservado';
+      tag.textContent = (passado || domingo) ? 'indisponível' : 'reservado';
       b.appendChild(tag);
     }
     grid.appendChild(b);
   }
   const mesMin = INICIO_AGENDA;
+  const mesMax = new Date(2026, 11, 1); // dezembro/2026: agenda não vai além do dia 19
   $('mes-ant').disabled = mesAtual <= mesMin;
+  $('mes-prox').disabled = mesAtual >= mesMax;
 }
 
 async function carregarMes() {
