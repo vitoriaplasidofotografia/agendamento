@@ -341,7 +341,7 @@ function desenharCalendario() {
     b.type = 'button';
     const num = document.createElement('span'); num.className = 'num'; num.textContent = d;
     b.appendChild(num);
-    const passado = s < hoje;
+    const passado = s <= hoje;
     const domingo = dataObj.getDay() === 0;
     const ultimaSemana = s >= ULTIMA_SEMANA_DE && s <= ULTIMA_SEMANA_ATE;
     const livre = !passado && !domingo && !ultimaSemana && diasLivres.indexOf(s) !== -1;
