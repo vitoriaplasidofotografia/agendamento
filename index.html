@@ -36,8 +36,9 @@ h1{font-family:var(--script);font-weight:400;color:var(--gold);font-size:46px;li
 .nav:disabled{opacity:.35;cursor:default}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
 .wd{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);padding:4px 0}
-.day{appearance:none;border:1px solid transparent;background:transparent;border-radius:10px;aspect-ratio:1;font-size:16px;color:var(--ink);cursor:pointer;padding:0}
-.day.off{color:#B9B2A4;cursor:default;text-decoration:line-through}
+.day{appearance:none;border:1px solid transparent;background:transparent;border-radius:10px;aspect-ratio:1;font-size:16px;color:var(--ink);cursor:pointer;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.day.off{color:#B9B2A4;cursor:default}
+.day.off .tag-dia{font-size:7px;letter-spacing:.02em;text-transform:uppercase;color:var(--danger);line-height:1;font-family:var(--sans)}
 .day.free{background:#fff;border-color:var(--line)}
 .day.free:hover{border-color:var(--gold-soft)}
 .day.empty{visibility:hidden}
@@ -247,6 +248,34 @@ async function api(params) {
   return r.json();
 }
 
+/* Senso de escassez: a agenda real fica intacta no backend, aqui só escondemos
+   parte do que já está livre. O corte é sempre o mesmo pro mesmo dia/horário
+   (hash do texto), então não "pisca" diferente a cada recarregamento. */
+const ESCASSEZ_ATIVA = true;
+const ESCASSEZ_PROB_DIA = 0.6; // % dos dias livres que seguem aparecendo no calendário
+const ESCASSEZ_MAX_HORARIOS = 2; // máximo de horários visíveis por dia
+const LOTADO_DEZ_DE = '2026-12-13'; // última semana de dezembro aparece sempre lotada
+const LOTADO_DEZ_ATE = '2026-12-19';
+
+function hashTexto(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return (h >>> 0) % 10000 / 10000;
+}
+
+function filtrarDiasEscassez(dias) {
+  if (!ESCASSEZ_ATIVA) return dias;
+  const filtrados = dias.filter((d) => hashTexto(d + '-dia') < ESCASSEZ_PROB_DIA);
+  return filtrados.length ? filtrados : dias; // nunca deixa o mês inteiro sem opção
+}
+
+function filtrarHorariosEscassez(data, horarios) {
+  if (!ESCASSEZ_ATIVA || horarios.length <= ESCASSEZ_MAX_HORARIOS) return horarios;
+  const ordenados = horarios.map((h) => ({ h, peso: hashTexto(data + '-' + h) })).sort((a, b) => a.peso - b.peso);
+  const escolhidos = ordenados.slice(0, ESCASSEZ_MAX_HORARIOS).map((x) => x.h);
+  return horarios.filter((h) => escolhidos.indexOf(h) !== -1);
+}
+
 async function apiPost(corpo) {
   // text/plain evita preflight de CORS no Apps Script
   const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(corpo) });
@@ -304,11 +333,20 @@ function desenharCalendario() {
     const s = iso(new Date(mesAtual.getFullYear(), mesAtual.getMonth(), d));
     const b = document.createElement('button');
     b.type = 'button';
-    b.textContent = d;
-    const livre = diasLivres.indexOf(s) !== -1;
+    const num = document.createElement('span'); num.className = 'num'; num.textContent = d;
+    b.appendChild(num);
+    const naUltimaSemana = s >= LOTADO_DEZ_DE && s <= LOTADO_DEZ_ATE;
+    const livre = !naUltimaSemana && diasLivres.indexOf(s) !== -1;
     b.className = 'day ' + (livre ? 'free' : 'off');
     b.disabled = !livre;
-    if (livre) b.addEventListener('click', () => escolherDia(s));
+    if (livre) {
+      b.addEventListener('click', () => escolherDia(s));
+    } else {
+      const tag = document.createElement('span');
+      tag.className = 'tag-dia';
+      tag.textContent = naUltimaSemana ? 'lotado' : 'reservado';
+      b.appendChild(tag);
+    }
     grid.appendChild(b);
   }
   const mesMin = INICIO_AGENDA;
@@ -319,7 +357,7 @@ async function carregarMes() {
   $('calendario').innerHTML = '<p class="carregando" style="grid-column:1/-1">Carregando datas…</p>';
   try {
     const r = await api({ acao: 'dias', mes: mesIso(mesAtual) });
-    diasLivres = r.ok ? r.dias : [];
+    diasLivres = filtrarDiasEscassez(r.ok ? r.dias : []);
   } catch (e) {
     diasLivres = [];
   }
@@ -338,7 +376,7 @@ async function escolherDia(s) {
   passo(4);
   try {
     const r = await api({ acao: 'horarios', data: s });
-    const horarios = r.ok ? r.horarios : [];
+    const horarios = filtrarHorariosEscassez(s, r.ok ? r.horarios : []);
     $('horarios').innerHTML = '';
     if (!horarios.length) {
       $('horarios').innerHTML = '<p class="sub" style="grid-column:1/-1">Não há horários livres neste dia. Escolha outra data.</p>';
