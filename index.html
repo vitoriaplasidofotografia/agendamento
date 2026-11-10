@@ -54,8 +54,11 @@ h1{font-family:var(--script);font-weight:400;color:var(--gold);font-size:46px;li
 .pac .inclui li{font-size:13.5px;color:var(--soft);display:flex;gap:7px;align-items:baseline}
 .pac .inclui li::before{content:"\2726";color:var(--gold-soft);font-size:10px;line-height:1;position:relative;top:-1px}
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.slot{appearance:none;border:1px solid var(--gold-soft);background:#fff;color:var(--moss-deep);border-radius:999px;padding:13px 10px;font-size:17px;cursor:pointer}
+.slot{appearance:none;border:1px solid var(--gold-soft);background:#fff;color:var(--moss-deep);border-radius:999px;padding:13px 10px;font-size:17px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
 .slot:hover{background:var(--moss);color:#fff;border-color:var(--moss)}
+.slot.reservado{border-color:var(--line);color:#B9B2A4;cursor:default}
+.slot.reservado:hover{background:#fff;color:#B9B2A4;border-color:var(--line)}
+.slot.reservado .tag-slot{font-size:9px;letter-spacing:.03em;text-transform:uppercase;color:var(--danger)}
 .back{appearance:none;border:0;background:none;color:var(--gold);font-size:14px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:6px 0;margin-bottom:4px}
 h2{font-family:var(--serif);font-weight:600;font-size:26px;margin:4px 0 8px}
 label{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px}
@@ -248,14 +251,13 @@ async function api(params) {
   return r.json();
 }
 
-/* Senso de escassez: a agenda real fica intacta no backend, aqui só escondemos
-   parte do que já está livre. O corte é sempre o mesmo pro mesmo dia/horário
-   (hash do texto), então não "pisca" diferente a cada recarregamento. */
+/* Senso de escassez: a agenda real fica intacta no backend. Todas as datas
+   livres aparecem abertas no calendário; dentro de cada data, alguns horários
+   aparecem marcados como "reservado" (visíveis, mas não clicáveis). O sorteio
+   é sempre o mesmo pro mesmo dia/horário (hash do texto), então não muda a
+   cada recarregamento. */
 const ESCASSEZ_ATIVA = true;
-const ESCASSEZ_PROB_DIA = 0.6; // % dos dias livres que seguem aparecendo no calendário
-const ESCASSEZ_MAX_HORARIOS = 2; // máximo de horários visíveis por dia
-const LOTADO_DEZ_DE = '2026-12-13'; // última semana de dezembro aparece sempre lotada
-const LOTADO_DEZ_ATE = '2026-12-19';
+const ESCASSEZ_MIN_LIVRES = 2; // mínimo de horários que continuam clicáveis por dia
 
 function hashTexto(s) {
   let h = 0;
@@ -263,17 +265,13 @@ function hashTexto(s) {
   return (h >>> 0) % 10000 / 10000;
 }
 
-function filtrarDiasEscassez(dias) {
-  if (!ESCASSEZ_ATIVA) return dias;
-  const filtrados = dias.filter((d) => hashTexto(d + '-dia') < ESCASSEZ_PROB_DIA);
-  return filtrados.length ? filtrados : dias; // nunca deixa o mês inteiro sem opção
-}
-
-function filtrarHorariosEscassez(data, horarios) {
-  if (!ESCASSEZ_ATIVA || horarios.length <= ESCASSEZ_MAX_HORARIOS) return horarios;
+function classificarHorariosEscassez(data, horarios) {
+  if (!ESCASSEZ_ATIVA || horarios.length <= ESCASSEZ_MIN_LIVRES) {
+    return horarios.map((h) => ({ h, livre: true }));
+  }
   const ordenados = horarios.map((h) => ({ h, peso: hashTexto(data + '-' + h) })).sort((a, b) => a.peso - b.peso);
-  const escolhidos = ordenados.slice(0, ESCASSEZ_MAX_HORARIOS).map((x) => x.h);
-  return horarios.filter((h) => escolhidos.indexOf(h) !== -1);
+  const livres = ordenados.slice(0, ESCASSEZ_MIN_LIVRES).map((x) => x.h);
+  return horarios.map((h) => ({ h, livre: livres.indexOf(h) !== -1 }));
 }
 
 async function apiPost(corpo) {
@@ -335,8 +333,7 @@ function desenharCalendario() {
     b.type = 'button';
     const num = document.createElement('span'); num.className = 'num'; num.textContent = d;
     b.appendChild(num);
-    const naUltimaSemana = s >= LOTADO_DEZ_DE && s <= LOTADO_DEZ_ATE;
-    const livre = !naUltimaSemana && diasLivres.indexOf(s) !== -1;
+    const livre = diasLivres.indexOf(s) !== -1;
     b.className = 'day ' + (livre ? 'free' : 'off');
     b.disabled = !livre;
     if (livre) {
@@ -344,7 +341,7 @@ function desenharCalendario() {
     } else {
       const tag = document.createElement('span');
       tag.className = 'tag-dia';
-      tag.textContent = naUltimaSemana ? 'lotado' : 'reservado';
+      tag.textContent = 'reservado';
       b.appendChild(tag);
     }
     grid.appendChild(b);
@@ -357,7 +354,7 @@ async function carregarMes() {
   $('calendario').innerHTML = '<p class="carregando" style="grid-column:1/-1">Carregando datas…</p>';
   try {
     const r = await api({ acao: 'dias', mes: mesIso(mesAtual) });
-    diasLivres = filtrarDiasEscassez(r.ok ? r.dias : []);
+    diasLivres = r.ok ? r.dias : [];
   } catch (e) {
     diasLivres = [];
   }
@@ -376,16 +373,25 @@ async function escolherDia(s) {
   passo(4);
   try {
     const r = await api({ acao: 'horarios', data: s });
-    const horarios = filtrarHorariosEscassez(s, r.ok ? r.horarios : []);
+    const horarios = classificarHorariosEscassez(s, r.ok ? r.horarios : []);
     $('horarios').innerHTML = '';
     if (!horarios.length) {
       $('horarios').innerHTML = '<p class="sub" style="grid-column:1/-1">Não há horários livres neste dia. Escolha outra data.</p>';
       return;
     }
-    horarios.forEach((h) => {
+    horarios.forEach(({ h, livre }) => {
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'slot'; b.textContent = h;
-      b.addEventListener('click', () => escolherHora(h));
+      b.type = 'button';
+      b.className = 'slot' + (livre ? '' : ' reservado');
+      const txt = document.createElement('span'); txt.textContent = h;
+      b.appendChild(txt);
+      if (livre) {
+        b.addEventListener('click', () => escolherHora(h));
+      } else {
+        b.disabled = true;
+        const tag = document.createElement('span'); tag.className = 'tag-slot'; tag.textContent = 'reservado';
+        b.appendChild(tag);
+      }
       $('horarios').appendChild(b);
     });
   } catch (e) {
