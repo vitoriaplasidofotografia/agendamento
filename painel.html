@@ -58,6 +58,10 @@ input:focus,select:focus{border-color:var(--blue)}
 .item.concluido{position:relative;background:#eceef1}
 .item.concluido::after{content:'';position:absolute;inset:0;background:rgba(120,130,145,.16);border-radius:var(--raio);pointer-events:none}
 .item.concluido .nome,.item.concluido .meta,.item.concluido .hora{opacity:.65}
+.item.passada{position:relative;background:#eceef1}
+.item.passada::after{content:'';position:absolute;inset:0;background:rgba(120,130,145,.16);border-radius:var(--raio);pointer-events:none}
+.item.passada .nome,.item.passada .meta,.item.passada .hora{opacity:.6}
+.tag.passada-tag{color:#4a5567;background:#dde1e7}
 .tag.concluido-tag{color:#4a5567;background:#dde1e7}
 .hora{font-family:var(--disp);font-size:18px;font-weight:600;color:var(--blue)}
 .nome{font-weight:600;font-size:16px;color:var(--ink)}
@@ -638,18 +642,22 @@ async function moverEtapa(a, novaEtapa) {
 function linha(a) {
   const el = document.createElement('div');
   const concluido = (a.etapa || 1) === ETAPAS.length;
-  el.className = 'item' + (ehNovo(a) ? ' novo' : '') + (concluido ? ' concluido' : '');
+  const passada = a.status !== STATUS_CANC && a.data < iso(new Date());
+  el.className = 'item' + (ehNovo(a) ? ' novo' : '') + (concluido ? ' concluido' : (passada ? ' passada' : ''));
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', () => abrirModal(a, a.etapa || 1));
 
   const hora = document.createElement('div'); hora.className = 'hora'; hora.textContent = a.inicio;
 
   const info = document.createElement('div');
   const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = a.nome;
   const pacote = document.createElement('div'); pacote.className = 'meta';
-  pacote.textContent = 'Pacote ' + a.pacote + (a.email ? ' · ' + a.email : '');
+  pacote.textContent = 'Pacote ' + a.pacote + (a.cenario ? ' · cenário ' + a.cenario : '') + (a.email ? ' · ' + a.email : '');
   const meta = document.createElement('div'); meta.className = 'meta';
   const numero = a.whatsapp.replace(/\D/g, '');
   const zap = document.createElement('a'); zap.className = 'zap'; zap.target = '_blank'; zap.rel = 'noopener';
   zap.href = 'https://wa.me/' + numero; zap.textContent = 'WhatsApp ' + numero;
+  zap.addEventListener('click', (e) => e.stopPropagation());
   meta.appendChild(zap);
   const tag = document.createElement('span');
   tag.className = 'tag ' + (a.status === STATUS_OK ? 'ok' : a.status === STATUS_CANC ? 'canc' : 'aguard');
@@ -657,17 +665,18 @@ function linha(a) {
   meta.appendChild(tag);
   if (ehNovo(a)) { const n = document.createElement('span'); n.className = 'tag novo'; n.textContent = 'novo'; meta.appendChild(n); }
   if (concluido) { const c = document.createElement('span'); c.className = 'tag concluido-tag'; c.textContent = 'concluído'; meta.appendChild(c); }
+  else if (passada) { const p = document.createElement('span'); p.className = 'tag passada-tag'; p.textContent = 'sessão realizada'; meta.appendChild(p); }
   info.appendChild(nome); info.appendChild(pacote); info.appendChild(meta);
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
   if (a.status !== STATUS_OK && a.status !== STATUS_CANC) {
     const ok = document.createElement('button'); ok.className = 'btn prim'; ok.type = 'button'; ok.textContent = 'Sinal recebido';
-    ok.addEventListener('click', () => mudar(a, STATUS_OK, ok));
+    ok.addEventListener('click', (e) => { e.stopPropagation(); mudar(a, STATUS_OK, ok); });
     acoes.appendChild(ok);
   }
   if (a.status !== STATUS_CANC) {
     const c = document.createElement('button'); c.className = 'btn perigo'; c.type = 'button'; c.textContent = 'Cancelar';
-    c.addEventListener('click', () => { if (confirm('Cancelar o agendamento de ' + a.nome + '?')) mudar(a, STATUS_CANC, c); });
+    c.addEventListener('click', (e) => { e.stopPropagation(); if (confirm('Cancelar o agendamento de ' + a.nome + '?')) mudar(a, STATUS_CANC, c); });
     acoes.appendChild(c);
   }
 
