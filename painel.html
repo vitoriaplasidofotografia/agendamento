@@ -618,9 +618,72 @@ function abrirModal(a, etapa) {
     html += linhaModal('Arquivos digitais até', dataLimite(a.data, PRAZO_DIGITAL_DIAS));
     html += linhaModal('Fotos impressas até', dataLimite(baseFisico(a), PRAZO_FISICO_DIAS));
   }
+  if (a.status !== STATUS_CANC) {
+    html += '<div class="modal-secao">Reagendar</div>';
+    html += '<div class="modal-linha"><span class="rot">Nova data</span><span class="val"><input type="date" id="modal-reagendar-data" value="' + a.data + '"></span></div>';
+    html += '<div class="modal-linha"><span class="rot">Novo horário</span><span class="val"><select id="modal-reagendar-hora"><option value="">Carregando…</option></select></span></div>';
+    html += '<button class="btn prim" id="modal-reagendar-salvar" type="button" style="width:100%;margin-top:10px">Salvar novo horário</button>';
+    html += '<p id="modal-reagendar-msg" style="font-size:12px;color:var(--danger);margin:8px 0 0"></p>';
+  }
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
   $('modal-fechar').addEventListener('click', fecharModal);
+  if (a.status !== STATUS_CANC) prepararReagendar(a);
+}
+
+async function prepararReagendar(a) {
+  const dataInput = $('modal-reagendar-data');
+  const horaSelect = $('modal-reagendar-hora');
+  const msg = $('modal-reagendar-msg');
+  const botao = $('modal-reagendar-salvar');
+
+  async function recarregarHorarios() {
+    horaSelect.innerHTML = '<option value="">Carregando…</option>';
+    msg.textContent = '';
+    try {
+      const r = await fetch(API_URL + '?' + new URLSearchParams({ acao: 'horarios', data: dataInput.value }));
+      const j = await r.json();
+      const mesmoDia = dataInput.value === a.data;
+      let horarios = j.ok ? j.horarios.slice() : [];
+      if (mesmoDia && horarios.indexOf(a.inicio) === -1) horarios.push(a.inicio);
+      horarios.sort();
+      horaSelect.innerHTML = '';
+      if (!horarios.length) {
+        horaSelect.innerHTML = '<option value="">Sem horários livres nesse dia</option>';
+        return;
+      }
+      horarios.forEach((h) => {
+        const op = document.createElement('option');
+        op.value = h;
+        op.textContent = h + (mesmoDia && h === a.inicio ? ' (atual)' : '');
+        horaSelect.appendChild(op);
+      });
+      horaSelect.value = mesmoDia ? a.inicio : horarios[0];
+    } catch (e) {
+      horaSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+    }
+  }
+
+  dataInput.addEventListener('change', recarregarHorarios);
+  await recarregarHorarios();
+
+  botao.addEventListener('click', async () => {
+    const novaData = dataInput.value;
+    const novoHorario = horaSelect.value;
+    if (!novaData || !novoHorario) { msg.textContent = 'Escolha data e horário.'; return; }
+    if (novaData === a.data && novoHorario === a.inicio) { msg.textContent = 'Esse já é o horário atual.'; return; }
+    botao.disabled = true;
+    msg.textContent = '';
+    try {
+      const r = await chamar({ acao: 'reagendar', senha: senha, id: a.id, data: novaData, inicio: novoHorario });
+      if (!r.ok) { msg.textContent = r.erro; botao.disabled = false; return; }
+      fecharModal();
+      await carregar();
+    } catch (e) {
+      msg.textContent = 'Não consegui reagendar. Tente de novo.';
+      botao.disabled = false;
+    }
+  });
 }
 
 function fecharModal() {
