@@ -641,8 +641,7 @@ async function prepararReagendar(a) {
     horaSelect.innerHTML = '<option value="">Carregando…</option>';
     msg.textContent = '';
     try {
-      const r = await fetch(API_URL + '?' + new URLSearchParams({ acao: 'horarios', data: dataInput.value }));
-      const j = await r.json();
+      const j = await chamar({ acao: 'horarios_reagendar', senha: senha, id: a.id, data: dataInput.value });
       const mesmoDia = dataInput.value === a.data;
       let horarios = j.ok ? j.horarios.slice() : [];
       if (mesmoDia && horarios.indexOf(a.inicio) === -1) horarios.push(a.inicio);
