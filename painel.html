@@ -273,6 +273,20 @@ a.zap:hover{text-decoration:underline}
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">A taxa de conversão é ajustada na aba "Em negociação".</p>
       </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Anúncios</div>
+        <div class="financas">
+          <div class="fin editavel"><label for="meta-anuncios-investimento">Investido em anúncios (R$)</label><input type="number" id="meta-anuncios-investimento" min="0" step="10" placeholder="Ex.: 500"></div>
+          <div class="fin fatura"><div class="rotulo">Retorno confirmado (sessões de anúncio)</div><div class="numero" id="meta-anuncios-retorno">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Lucro / ROI até agora</div><div class="numero" id="meta-anuncios-lucro">—</div></div>
+        </div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Em negociação vindos de anúncio (valor cheio)</div><div class="numero" id="meta-anuncios-negociando">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Projeção com conversão</div><div class="numero" id="meta-anuncios-negociando-projetado">R$ 0,00</div></div>
+        </div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">Retorno conta as sessões cuja origem do lead é "Anúncio" (valor total do pacote + extras). Lucro/ROI só aparece com um valor investido preenchido.</p>
+      </div>
       <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
     </div>
 
@@ -991,6 +1005,7 @@ function entrarPainel() {
   if (mv) $('meta-valor').value = mv;
   $('meta-preco-extra').value = lerNum(CHAVE_PRECO_EXTRA, PRECO_FOTO_EXTRA);
   $('meta-media-extras').value = lerNum(CHAVE_MEDIA_EXTRAS, 0);
+  $('meta-anuncios-investimento').value = lerNum(CHAVE_ANUNCIOS_INVESTIMENTO, 0);
   $('neg-taxa-conversao').value = lerNum(CHAVE_NEG_TAXA, 50);
   carregar();
   carregarPacotes();
@@ -1046,6 +1061,7 @@ function guardarNum(chave, v) { try { localStorage.setItem(chave, String(v)); } 
 const CHAVE_META = 'painel-meta-valor';
 const CHAVE_PRECO_EXTRA = 'painel-meta-preco-extra';
 const CHAVE_MEDIA_EXTRAS = 'painel-meta-media-extras';
+const CHAVE_ANUNCIOS_INVESTIMENTO = 'painel-meta-anuncios-investimento';
 let capacidadeLivre = null;
 
 async function carregarCapacidade() {
@@ -1103,11 +1119,31 @@ function desenharMeta() {
   $('meta-negociacao-projetada').textContent = formatarReais(projecaoNegociacao);
   $('meta-negociacao-faturamento').textContent = formatarReais(faturamentoComNegociacao);
   $('meta-negociacao-falta').textContent = formatarReais(Math.max(0, meta - faturamentoComNegociacao));
+
+  const retornoAnuncios = ativos.filter((a) => a.origem === 'Anúncio').reduce((s, a) => {
+    return s + (a.status === STATUS_OK ? lerReais(a.sinal_txt) : 0) + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a);
+  }, 0);
+  const investimentoAnuncios = lerNum(CHAVE_ANUNCIOS_INVESTIMENTO, 0);
+  const negociandoAnuncio = negociacoes.filter((n) => n.status === 'negociando' && n.origem === 'Anúncio').reduce((s, n) => s + (n.valor || 0), 0);
+  $('meta-anuncios-retorno').textContent = formatarReais(retornoAnuncios);
+  const lucroEl = $('meta-anuncios-lucro');
+  if (investimentoAnuncios > 0) {
+    const lucro = retornoAnuncios - investimentoAnuncios;
+    const roi = (retornoAnuncios / investimentoAnuncios) * 100;
+    lucroEl.textContent = formatarReais(lucro) + ' (' + roi.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '% do investido)';
+    lucroEl.style.color = lucro >= 0 ? 'var(--green)' : 'var(--danger)';
+  } else {
+    lucroEl.textContent = '—';
+    lucroEl.style.color = '';
+  }
+  $('meta-anuncios-negociando').textContent = formatarReais(negociandoAnuncio);
+  $('meta-anuncios-negociando-projetado').textContent = formatarReais(negociandoAnuncio * taxaConversao);
 }
 
 $('meta-valor').addEventListener('input', () => { guardarNum(CHAVE_META, $('meta-valor').value || 0); desenharMeta(); });
 $('meta-preco-extra').addEventListener('input', () => { guardarNum(CHAVE_PRECO_EXTRA, $('meta-preco-extra').value || 0); desenharMeta(); });
 $('meta-media-extras').addEventListener('input', () => { guardarNum(CHAVE_MEDIA_EXTRAS, $('meta-media-extras').value || 0); desenharMeta(); });
+$('meta-anuncios-investimento').addEventListener('input', () => { guardarNum(CHAVE_ANUNCIOS_INVESTIMENTO, $('meta-anuncios-investimento').value || 0); desenharMeta(); });
 
 /* ---------- aba Em negociação ---------- */
 const CHAVE_NEG_TAXA = 'painel-neg-taxa-conversao';
