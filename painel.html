@@ -297,8 +297,15 @@ function formatarReais(v) {
 const CUSTO_PACOTE = { 'Laço': 0, 'Presente': 22.50, 'Bênção': 43.15 };
 function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0; }
 /* valor de cada fotografia extra, cobrada além do pacote (mesmo valor informado na galeria Alboom) */
+/* até 5 fotos extras: R$14,90 cada · a partir da 6ª foto extra: R$9,90 cada */
 const PRECO_FOTO_EXTRA = 14.90;
-function extrasValorDe(a) { return (a.fotos_extras || 0) * PRECO_FOTO_EXTRA; }
+const PRECO_FOTO_EXTRA_ACIMA5 = 9.90;
+function valorFotosExtras(q) {
+  q = Math.max(0, q || 0);
+  if (q <= 5) return q * PRECO_FOTO_EXTRA;
+  return 5 * PRECO_FOTO_EXTRA + (q - 5) * PRECO_FOTO_EXTRA_ACIMA5;
+}
+function extrasValorDe(a) { return valorFotosExtras(a.fotos_extras || 0); }
 /* prazos de entrega, em dias corridos após a sessão */
 const PRAZO_DIGITAL_DIAS = 6;
 const PRAZO_FISICO_DIAS = 10;
@@ -374,7 +381,7 @@ const ETAPA_CHECKLIST = [
     ['Copiar o link da galeria.', 'Vitória'],
     ['Enviar o link pelo WhatsApp.', 'Vitória'],
     ['Explicar quantas fotografias estão incluídas no pacote.', 'Vitória'],
-    ['Informar o valor de R$ 14,90 por fotografia extra.', 'Vitória'],
+    ['Informar o valor da fotografia extra: R$ 14,90 cada até 5 fotos, R$ 9,90 cada a partir da 6ª.', 'Vitória'],
     ['Orientar como selecionar as imagens adicionais.', 'Vitória'],
     ['Aguardar a seleção e confirmar eventual compra de extras.', 'Vitória'],
   ],
@@ -848,7 +855,7 @@ function abrirModalFinanceiro(a) {
   html += linhaModal('Sinal (30%)', a.sinal_txt + ' · ' + (a.status === STATUS_OK ? 'pago' : a.status === STATUS_CANC ? 'cancelado' : 'pendente'));
   if (a.status !== STATUS_CANC) {
     html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
-    html += '<div class="modal-secao">Fotos extras (R$ ' + PRECO_FOTO_EXTRA.toFixed(2).replace('.', ',') + ' cada)</div>';
+    html += '<div class="modal-secao">Fotos extras (até 5: R$ ' + PRECO_FOTO_EXTRA.toFixed(2).replace('.', ',') + ' cada · acima de 5: R$ ' + PRECO_FOTO_EXTRA_ACIMA5.toFixed(2).replace('.', ',') + ' cada)</div>';
     html += '<div class="modal-linha"><span class="rot">Quantidade adquirida</span><span class="val"><input type="number" id="modal-extras-qtd" min="0" step="1" value="' + extras + '" style="width:80px;text-align:right;padding:4px 8px"></span></div>';
     html += linhaModal('Total em fotos extras', '<span id="modal-extras-total">' + formatarReais(extrasTotalValor) + '</span>');
     html += linhaModal('Resta receber (70% + extras)', '<span id="modal-extras-resta">' + formatarReais(restaBase + extrasTotalValor) + '</span>');
@@ -861,7 +868,7 @@ function abrirModalFinanceiro(a) {
     const input = $('modal-extras-qtd');
     input.addEventListener('input', () => {
       const q = Math.max(0, parseInt(input.value, 10) || 0);
-      const tot = q * PRECO_FOTO_EXTRA;
+      const tot = valorFotosExtras(q);
       $('modal-extras-total').textContent = formatarReais(tot);
       $('modal-extras-resta').textContent = formatarReais(restaBase + tot);
     });
