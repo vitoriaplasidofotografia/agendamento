@@ -817,12 +817,12 @@ function linhaFinanceira(a) {
     tagSaldo.textContent = a.saldo_pago ? '70% pago' : '70% pendente';
     linha2.appendChild(tagSaldo);
     if (a.fotos_extras > 0) {
-      const tagExtras = document.createElement('span'); tagExtras.className = 'tag extras';
-      tagExtras.textContent = a.fotos_extras + ' foto(s) extra · ' + formatarReais(extrasValorDe(a));
+      const tagExtras = document.createElement('span'); tagExtras.className = 'tag ' + (a.extras_pago ? 'ok' : 'extras');
+      tagExtras.textContent = a.fotos_extras + ' foto(s) extra · ' + formatarReais(extrasValorDe(a)) + (a.extras_pago ? ' · pago' : ' · pendente');
       linha2.appendChild(tagExtras);
     }
     const resta = document.createElement('span'); resta.className = 'tag resta';
-    resta.textContent = 'resta ' + formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt) + extrasValorDe(a));
+    resta.textContent = 'resta ' + formatarReais((a.saldo_pago ? 0 : (lerReais(a.valor_txt) - lerReais(a.sinal_txt))) + (a.extras_pago ? 0 : extrasValorDe(a)));
     linha2.appendChild(resta);
     const custo = document.createElement('span'); custo.className = 'tag custo';
     custo.textContent = 'custo ' + formatarReais(custoDe(a));
@@ -833,9 +833,15 @@ function linhaFinanceira(a) {
   const acoes = document.createElement('div'); acoes.className = 'acoes';
   if (a.status !== STATUS_CANC) {
     const s = document.createElement('button'); s.className = a.saldo_pago ? 'btn ghost' : 'btn prim'; s.type = 'button';
-    s.textContent = a.saldo_pago ? 'Desfazer 70%' : 'Marcar 70% pago';
+    s.textContent = a.saldo_pago ? 'Desfazer pago pacote' : 'Marcar pago pacote';
     s.addEventListener('click', (e) => { e.stopPropagation(); mudarSaldo(a, !a.saldo_pago, s); });
     acoes.appendChild(s);
+    if (a.fotos_extras > 0) {
+      const x = document.createElement('button'); x.className = a.extras_pago ? 'btn ghost' : 'btn prim'; x.type = 'button';
+      x.textContent = a.extras_pago ? 'Desfazer pago adicionais' : 'Marcar pago adicionais';
+      x.addEventListener('click', (e) => { e.stopPropagation(); mudarExtrasPago(a, !a.extras_pago, x); });
+      acoes.appendChild(x);
+    }
   }
 
   el.appendChild(hora); el.appendChild(info); el.appendChild(acoes);
@@ -854,11 +860,16 @@ function abrirModalFinanceiro(a) {
   html += linhaModal('Sinal (30%)', a.sinal_txt + ' · ' + (a.status === STATUS_OK ? 'pago' : a.status === STATUS_CANC ? 'cancelado' : 'pendente'));
   if (a.status !== STATUS_CANC) {
     html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
+    html += '<button class="btn ' + (a.saldo_pago ? 'ghost' : 'prim') + '" id="modal-saldo-botao" type="button" style="width:100%;margin-top:4px">' + (a.saldo_pago ? 'Desfazer pago pacote' : 'Marcar pago pacote') + '</button>';
     html += '<div class="modal-secao">Fotos extras (até 4: R$ ' + PRECO_FOTO_EXTRA.toFixed(2).replace('.', ',') + ' cada · 5 ou mais: R$ ' + PRECO_FOTO_EXTRA_ACIMA5.toFixed(2).replace('.', ',') + ' cada)</div>';
     html += '<div class="modal-linha"><span class="rot">Quantidade adquirida</span><span class="val"><input type="number" id="modal-extras-qtd" min="0" step="1" value="' + extras + '" style="width:80px;text-align:right;padding:4px 8px"></span></div>';
     html += linhaModal('Total em fotos extras', '<span id="modal-extras-total">' + formatarReais(extrasTotalValor) + '</span>');
-    html += linhaModal('Resta receber (70% + extras)', '<span id="modal-extras-resta">' + formatarReais(restaBase + extrasTotalValor) + '</span>');
     html += '<button class="btn prim" id="modal-extras-salvar" type="button" style="width:100%;margin-top:10px">Salvar fotos extras</button>';
+    if (extras > 0) {
+      html += linhaModal('Adicionais', a.extras_pago ? 'pago' : 'pendente');
+      html += '<button class="btn ' + (a.extras_pago ? 'ghost' : 'prim') + '" id="modal-extras-pago-botao" type="button" style="width:100%;margin-top:4px">' + (a.extras_pago ? 'Desfazer pago adicionais' : 'Marcar pago adicionais') + '</button>';
+    }
+    html += linhaModal('Resta receber (pacote + adicionais)', '<span id="modal-extras-resta">' + formatarReais((a.saldo_pago ? 0 : restaBase) + (a.extras_pago ? 0 : extrasTotalValor)) + '</span>');
   }
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
@@ -869,12 +880,15 @@ function abrirModalFinanceiro(a) {
       const q = Math.max(0, parseInt(input.value, 10) || 0);
       const tot = valorFotosExtras(q);
       $('modal-extras-total').textContent = formatarReais(tot);
-      $('modal-extras-resta').textContent = formatarReais(restaBase + tot);
+      $('modal-extras-resta').textContent = formatarReais((a.saldo_pago ? 0 : restaBase) + (a.extras_pago ? 0 : tot));
     });
     $('modal-extras-salvar').addEventListener('click', () => {
       const q = Math.max(0, parseInt(input.value, 10) || 0);
       salvarExtras(a, q);
     });
+    $('modal-saldo-botao').addEventListener('click', (e) => { mudarSaldo(a, !a.saldo_pago, e.target); });
+    const botaoExtrasPago = $('modal-extras-pago-botao');
+    if (botaoExtrasPago) botaoExtrasPago.addEventListener('click', (e) => { mudarExtrasPago(a, !a.extras_pago, e.target); });
   }
 }
 
@@ -897,6 +911,20 @@ async function mudarSaldo(a, pago, botao) {
   try {
     const r = await chamar({ acao: 'saldo', senha: senha, id: a.id, pago: pago });
     if (!r.ok) { $('erro-painel').textContent = r.erro; botao.disabled = false; return; }
+    fecharModal();
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    botao.disabled = false;
+  }
+}
+
+async function mudarExtrasPago(a, pago, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'extras_pago', senha: senha, id: a.id, pago: pago });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; botao.disabled = false; return; }
+    fecharModal();
     await carregar();
   } catch (e) {
     $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
