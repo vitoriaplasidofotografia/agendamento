@@ -284,6 +284,7 @@ a.zap:hover{text-decoration:underline}
         <div class="financas">
           <div class="fin"><div class="rotulo">Em negociação vindos de anúncio (valor cheio)</div><div class="numero" id="meta-anuncios-negociando">R$ 0,00</div></div>
           <div class="fin fatura"><div class="rotulo">Projeção com conversão</div><div class="numero" id="meta-anuncios-negociando-projetado">R$ 0,00</div></div>
+          <div class="fin lucro"><div class="rotulo">Confirmado + projeção − investido</div><div class="numero" id="meta-anuncios-liquido">R$ 0,00</div></div>
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">Retorno conta as sessões cuja origem do lead é "Anúncio" (valor total do pacote + extras). Lucro/ROI só aparece com um valor investido preenchido.</p>
       </div>
@@ -1136,8 +1137,13 @@ function desenharMeta() {
     lucroEl.textContent = '—';
     lucroEl.style.color = '';
   }
+  const negociandoAnuncioProjetado = negociandoAnuncio * taxaConversao;
   $('meta-anuncios-negociando').textContent = formatarReais(negociandoAnuncio);
-  $('meta-anuncios-negociando-projetado').textContent = formatarReais(negociandoAnuncio * taxaConversao);
+  $('meta-anuncios-negociando-projetado').textContent = formatarReais(negociandoAnuncioProjetado);
+  const liquidoEl = $('meta-anuncios-liquido');
+  const liquido = retornoAnuncios + negociandoAnuncioProjetado - investimentoAnuncios;
+  liquidoEl.textContent = formatarReais(liquido);
+  liquidoEl.style.color = liquido >= 0 ? 'var(--green)' : 'var(--danger)';
 }
 
 $('meta-valor').addEventListener('input', () => { guardarNum(CHAVE_META, $('meta-valor').value || 0); desenharMeta(); });
