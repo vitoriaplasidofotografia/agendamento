@@ -283,6 +283,7 @@ a.zap:hover{text-decoration:underline}
           <div class="fin editavel"><label for="neg-nome">Nome</label><input type="text" id="neg-nome" placeholder="Nome do lead"></div>
           <div class="fin editavel"><label for="neg-whatsapp">WhatsApp</label><input type="text" id="neg-whatsapp" placeholder="Com DDD"></div>
           <div class="fin editavel"><label for="neg-pacote">Pacote de interesse</label><select id="neg-pacote"></select></div>
+          <div class="fin editavel"><label for="neg-origem">De onde veio</label><select id="neg-origem"><option value="">Não informado</option></select></div>
         </div>
         <div class="financas">
           <div class="fin editavel" style="grid-column:1/-1"><label for="neg-obs">Observação (opcional)</label><input type="text" id="neg-obs" placeholder="Ex.: pediu desconto, vai decidir até sexta..."></div>
@@ -1130,6 +1131,13 @@ async function carregarPacotes() {
     op.textContent = p.nome + ' · ' + p.valor_txt;
     sel.appendChild(op);
   });
+  const selOrigem = $('neg-origem');
+  ORIGENS.forEach((o) => {
+    const op = document.createElement('option');
+    op.value = o;
+    op.textContent = o;
+    selOrigem.appendChild(op);
+  });
 }
 
 async function carregarNegociacao() {
@@ -1173,6 +1181,10 @@ function linhaNegociacao(n) {
   tagStatus.className = 'tag ' + (n.status === 'convertido' ? 'ok' : n.status === 'perdido' ? 'canc' : 'aguard');
   tagStatus.textContent = STATUS_NEG_LABEL[n.status] || n.status;
   linha2.appendChild(tagStatus);
+  if (n.origem) {
+    const tagOrigem = document.createElement('span'); tagOrigem.className = 'tag origem'; tagOrigem.textContent = n.origem;
+    linha2.appendChild(tagOrigem);
+  }
   if (n.whatsapp) {
     const zap = document.createElement('a'); zap.className = 'zap'; zap.target = '_blank'; zap.rel = 'noopener';
     zap.href = 'https://wa.me/' + n.whatsapp; zap.textContent = n.whatsapp;
@@ -1230,15 +1242,16 @@ $('neg-adicionar').addEventListener('click', async () => {
   const nome = $('neg-nome').value.trim();
   const whatsapp = $('neg-whatsapp').value.replace(/\D/g, '');
   const pacote = $('neg-pacote').value;
+  const origem = $('neg-origem').value;
   const observacao = $('neg-obs').value.trim();
   if (nome.length < 2) { $('neg-erro').textContent = 'Informe o nome do lead.'; return; }
   if (!pacote) { $('neg-erro').textContent = 'Escolha um pacote.'; return; }
   const botao = $('neg-adicionar');
   botao.disabled = true;
   try {
-    const r = await chamar({ acao: 'negociacao_criar', senha: senha, nome: nome, whatsapp: whatsapp, pacote: pacote, observacao: observacao });
+    const r = await chamar({ acao: 'negociacao_criar', senha: senha, nome: nome, whatsapp: whatsapp, pacote: pacote, origem: origem, observacao: observacao });
     if (!r.ok) { $('neg-erro').textContent = r.erro; botao.disabled = false; return; }
-    $('neg-nome').value = ''; $('neg-whatsapp').value = ''; $('neg-obs').value = '';
+    $('neg-nome').value = ''; $('neg-whatsapp').value = ''; $('neg-origem').value = ''; $('neg-obs').value = '';
     await carregarNegociacao();
   } catch (e) {
     $('neg-erro').textContent = 'Não consegui salvar. Tente de novo.';
