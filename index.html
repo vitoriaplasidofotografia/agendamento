@@ -260,6 +260,8 @@ const ESCASSEZ_ATIVA = true;
 const ESCASSEZ_MIN_LIVRES = 2; // mínimo de horários que continuam clicáveis por dia
 const ULTIMA_SEMANA_DE = '2026-12-13'; // última semana antes do limite da agenda: aparece sempre "reservado"
 const ULTIMA_SEMANA_ATE = '2026-12-19';
+// horários forçados a aparecer livres mesmo se o sorteio da escassez marcaria como "reservado" ('data-horario')
+const ESCASSEZ_FORCAR_LIVRE = ['2026-11-20-10:30'];
 
 function hashTexto(s) {
   let h = 0;
@@ -273,6 +275,9 @@ function classificarHorariosEscassez(data, horarios) {
   }
   const ordenados = horarios.map((h) => ({ h, peso: hashTexto(data + '-' + h) })).sort((a, b) => a.peso - b.peso);
   const livres = ordenados.slice(0, ESCASSEZ_MIN_LIVRES).map((x) => x.h);
+  horarios.forEach((h) => {
+    if (ESCASSEZ_FORCAR_LIVRE.indexOf(data + '-' + h) !== -1 && livres.indexOf(h) === -1) livres.push(h);
+  });
   return horarios.map((h) => ({ h, livre: livres.indexOf(h) !== -1 }));
 }
 
