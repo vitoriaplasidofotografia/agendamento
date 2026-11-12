@@ -73,6 +73,7 @@ input:focus,select:focus{border-color:var(--blue)}
 .tag.novo{color:#fff;background:var(--purple)}
 .tag.resta{color:var(--blue);background:var(--blue-soft)}
 .tag.extras{color:var(--purple);background:var(--purple-soft)}
+.tag.origem{color:var(--soft);background:var(--bg2)}
 .acoes{display:flex;flex-direction:column;gap:6px}
 .acoes .btn{padding:8px 12px;font-size:12px;white-space:nowrap}
 a.zap{color:var(--blue);text-decoration:none;font-size:13px}
@@ -272,6 +273,7 @@ const CHAVE_SESSAO = 'painel-agenda-senha';
 const STATUS_AGUARDA = 'aguardando sinal';
 const STATUS_OK = 'sinal confirmado';
 const STATUS_CANC = 'cancelado';
+const ORIGENS = ['Indicação', 'Orgânico', 'Anúncio'];
 
 function lerReais(txt) {
   if (!txt) return 0;
@@ -603,6 +605,12 @@ function abrirModal(a, etapa) {
   html += '<div class="modal-secao">Contato</div>';
   html += linhaModal('WhatsApp', '<a class="zap" target="_blank" rel="noopener" href="https://wa.me/' + numero + '">' + numero + '</a>');
   html += linhaModal('E-mail', a.email || '—');
+  html += '<div class="modal-secao">Origem do lead</div>';
+  html += '<div class="modal-linha"><span class="rot">De onde veio</span><span class="val"><select id="modal-origem">';
+  html += '<option value=""' + (!a.origem ? ' selected' : '') + '>Não informado</option>';
+  ORIGENS.forEach((o) => { html += '<option value="' + o + '"' + (a.origem === o ? ' selected' : '') + '>' + o + '</option>'; });
+  html += '</select></span></div>';
+  html += '<p id="modal-origem-msg" style="font-size:12px;color:var(--green);margin:4px 0 0"></p>';
   html += '<div class="modal-secao">Financeiro</div>';
   html += linhaModal('Pacote', a.pacote);
   html += linhaModal('Valor total', a.valor_txt);
@@ -628,6 +636,19 @@ function abrirModal(a, etapa) {
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
   $('modal-fechar').addEventListener('click', fecharModal);
+  $('modal-origem').addEventListener('change', async (e) => {
+    const msgOrigem = $('modal-origem-msg');
+    msgOrigem.textContent = 'Salvando…';
+    try {
+      const r = await chamar({ acao: 'origem', senha: senha, id: a.id, origem: e.target.value });
+      if (!r.ok) { msgOrigem.textContent = r.erro; return; }
+      a.origem = r.origem;
+      msgOrigem.textContent = 'Salvo.';
+      await carregar();
+    } catch (err) {
+      msgOrigem.textContent = 'Não consegui salvar. Tente de novo.';
+    }
+  });
   if (a.status !== STATUS_CANC) prepararReagendar(a);
 }
 
@@ -725,6 +746,7 @@ function linha(a) {
   tag.className = 'tag ' + (a.status === STATUS_OK ? 'ok' : a.status === STATUS_CANC ? 'canc' : 'aguard');
   tag.textContent = a.status === STATUS_OK ? 'sinal pago' : a.status === STATUS_CANC ? 'cancelado' : 'sinal pendente';
   meta.appendChild(tag);
+  if (a.origem) { const o = document.createElement('span'); o.className = 'tag origem'; o.textContent = a.origem; meta.appendChild(o); }
   if (ehNovo(a)) { const n = document.createElement('span'); n.className = 'tag novo'; n.textContent = 'novo'; meta.appendChild(n); }
   if (concluido) { const c = document.createElement('span'); c.className = 'tag concluido-tag'; c.textContent = 'concluído'; meta.appendChild(c); }
   else if (passada) { const p = document.createElement('span'); p.className = 'tag passada-tag'; p.textContent = 'sessão realizada'; meta.appendChild(p); }
