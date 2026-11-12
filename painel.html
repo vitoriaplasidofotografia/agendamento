@@ -76,6 +76,13 @@ input:focus,select:focus{border-color:var(--blue)}
 .tag.origem{color:var(--soft);background:var(--bg2)}
 .acoes{display:flex;flex-direction:column;gap:6px}
 .acoes .btn{padding:8px 12px;font-size:12px;white-space:nowrap}
+.item.negociacao{grid-template-columns:1fr auto}
+.item.negociacao .acoes{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
+.item.negociacao .acoes .btn{padding:5px 10px;font-size:11px}
+@media (max-width:560px){
+  .item.negociacao{grid-template-columns:1fr}
+  .item.negociacao .acoes{grid-column:1/-1;justify-content:flex-start;margin-top:4px}
+}
 a.zap{color:var(--blue);text-decoration:none;font-size:13px}
 a.zap:hover{text-decoration:underline}
 .vazio{text-align:center;color:var(--soft);padding:30px 0;font-style:italic;font-size:16px}
@@ -1212,7 +1219,7 @@ function desenharNegociacao() {
 
 function linhaNegociacao(n) {
   const el = document.createElement('div');
-  el.className = 'item';
+  el.className = 'item negociacao';
 
   const info = document.createElement('div');
   const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = n.nome;
