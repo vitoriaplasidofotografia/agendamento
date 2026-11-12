@@ -174,9 +174,10 @@ a.zap:hover{text-decoration:underline}
       <button class="aba" id="aba-financeiro" type="button">Financeiro</button>
       <button class="aba" id="aba-meta" type="button">Meta</button>
       <button class="aba" id="aba-kanban" type="button">Kanban</button>
+      <button class="aba" id="aba-negociacao" type="button">Em negociação</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="card-filtros">
       <div class="filtros">
         <div>
           <label for="periodo">Período</label>
@@ -261,7 +262,45 @@ a.zap:hover{text-decoration:underline}
           <div class="fin"><div class="rotulo">Cabe nos horários livres?</div><div class="numero" id="meta-cabe">—</div></div>
         </div>
       </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Com os leads em negociação</div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Em negociação (valor cheio dos pacotes)</div><div class="numero" id="meta-negociacao-total">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Projeção (× taxa de conversão)</div><div class="numero" id="meta-negociacao-projetada">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Faturamento atual + projeção</div><div class="numero" id="meta-negociacao-faturamento">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Falta pra meta (com negociação)</div><div class="numero" id="meta-negociacao-falta">R$ 0,00</div></div>
+        </div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">A taxa de conversão é ajustada na aba "Em negociação".</p>
+      </div>
       <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
+    </div>
+
+    <div id="view-negociacao" hidden>
+      <div class="card">
+        <div class="bloco-titulo">Novo lead em negociação</div>
+        <div class="financas">
+          <div class="fin editavel"><label for="neg-nome">Nome</label><input type="text" id="neg-nome" placeholder="Nome do lead"></div>
+          <div class="fin editavel"><label for="neg-whatsapp">WhatsApp</label><input type="text" id="neg-whatsapp" placeholder="Com DDD"></div>
+          <div class="fin editavel"><label for="neg-pacote">Pacote de interesse</label><select id="neg-pacote"></select></div>
+        </div>
+        <div class="financas">
+          <div class="fin editavel" style="grid-column:1/-1"><label for="neg-obs">Observação (opcional)</label><input type="text" id="neg-obs" placeholder="Ex.: pediu desconto, vai decidir até sexta..."></div>
+        </div>
+        <button class="btn prim" id="neg-adicionar" type="button" style="width:100%;margin-top:10px">Adicionar lead</button>
+        <p class="erro" id="neg-erro"></p>
+      </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Projeção com conversão</div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Em negociação (valor cheio)</div><div class="numero" id="neg-total-negociando">R$ 0,00</div></div>
+          <div class="fin editavel"><label for="neg-taxa-conversao">Taxa de conversão esperada (%)</label><input type="number" id="neg-taxa-conversao" min="0" max="100" step="5" value="50"></div>
+          <div class="fin fatura"><div class="rotulo">Projeção (negociação × taxa)</div><div class="numero" id="neg-total-projetado">R$ 0,00</div></div>
+        </div>
+      </div>
+
+      <div id="negociacao-lista"></div>
     </div>
 
     <div id="view-kanban" hidden>
@@ -951,7 +990,10 @@ function entrarPainel() {
   if (mv) $('meta-valor').value = mv;
   $('meta-preco-extra').value = lerNum(CHAVE_PRECO_EXTRA, PRECO_FOTO_EXTRA);
   $('meta-media-extras').value = lerNum(CHAVE_MEDIA_EXTRAS, 0);
+  $('neg-taxa-conversao').value = lerNum(CHAVE_NEG_TAXA, 50);
   carregar();
+  carregarPacotes();
+  carregarNegociacao();
   clearInterval(timer);
   timer = setInterval(carregar, 60000); // atualiza sozinho a cada minuto
 }
@@ -983,17 +1025,19 @@ $('periodo').addEventListener('change', () => {
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 function trocarAba(ativa) {
-  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban' };
-  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban' };
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao' };
   Object.keys(abas).forEach((k) => {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
   });
+  $('card-filtros').hidden = ativa === 'negociacao';
 }
 $('aba-lista').addEventListener('click', () => trocarAba('lista'));
 $('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
 $('aba-meta').addEventListener('click', () => trocarAba('meta'));
 $('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
+$('aba-negociacao').addEventListener('click', () => trocarAba('negociacao'));
 
 /* ---------- aba Meta ---------- */
 function lerNum(chave, padrao) { try { const v = localStorage.getItem(chave); return v === null ? padrao : Number(v); } catch (e) { return padrao; } }
@@ -1049,11 +1093,164 @@ function desenharMeta() {
     cabeEl.textContent = cabe ? 'sim' : 'não, falta(m) ' + (sessoesNecessarias - capacidadeLivre);
     cabeEl.style.color = cabe ? 'var(--green)' : 'var(--danger)';
   }
+
+  const totalNegociando = negociacoes.filter((n) => n.status === 'negociando').reduce((s, n) => s + (n.valor || 0), 0);
+  const taxaConversao = lerNum(CHAVE_NEG_TAXA, 50) / 100;
+  const projecaoNegociacao = totalNegociando * taxaConversao;
+  const faturamentoComNegociacao = faturamentoAtual + projecaoNegociacao;
+  $('meta-negociacao-total').textContent = formatarReais(totalNegociando);
+  $('meta-negociacao-projetada').textContent = formatarReais(projecaoNegociacao);
+  $('meta-negociacao-faturamento').textContent = formatarReais(faturamentoComNegociacao);
+  $('meta-negociacao-falta').textContent = formatarReais(Math.max(0, meta - faturamentoComNegociacao));
 }
 
 $('meta-valor').addEventListener('input', () => { guardarNum(CHAVE_META, $('meta-valor').value || 0); desenharMeta(); });
 $('meta-preco-extra').addEventListener('input', () => { guardarNum(CHAVE_PRECO_EXTRA, $('meta-preco-extra').value || 0); desenharMeta(); });
 $('meta-media-extras').addEventListener('input', () => { guardarNum(CHAVE_MEDIA_EXTRAS, $('meta-media-extras').value || 0); desenharMeta(); });
+
+/* ---------- aba Em negociação ---------- */
+const CHAVE_NEG_TAXA = 'painel-neg-taxa-conversao';
+const STATUS_NEG_LABEL = { negociando: 'negociando', perdido: 'perdido', convertido: 'convertido' };
+let negociacoes = [];
+let pacotesDisponiveis = [];
+
+async function carregarPacotes() {
+  try {
+    const r = await fetch(API_URL + '?acao=config');
+    const j = await r.json();
+    pacotesDisponiveis = j.ok ? j.pacotes : [];
+  } catch (e) {
+    pacotesDisponiveis = [];
+  }
+  const sel = $('neg-pacote');
+  sel.innerHTML = '';
+  pacotesDisponiveis.forEach((p) => {
+    const op = document.createElement('option');
+    op.value = p.nome;
+    op.textContent = p.nome + ' · ' + p.valor_txt;
+    sel.appendChild(op);
+  });
+}
+
+async function carregarNegociacao() {
+  try {
+    const r = await chamar({ acao: 'negociacao_listar', senha: senha });
+    negociacoes = r.ok ? r.negociacoes : [];
+  } catch (e) {
+    negociacoes = [];
+  }
+  desenharNegociacao();
+  desenharMeta();
+}
+
+function desenharNegociacao() {
+  const lista = $('negociacao-lista');
+  lista.innerHTML = '';
+  const ativos = negociacoes.filter((n) => n.status === 'negociando');
+  const outros = negociacoes.filter((n) => n.status !== 'negociando');
+  if (!negociacoes.length) {
+    lista.innerHTML = '<p class="atualiza">Nenhum lead em negociação ainda.</p>';
+  } else {
+    ativos.forEach((n) => lista.appendChild(linhaNegociacao(n)));
+    outros.forEach((n) => lista.appendChild(linhaNegociacao(n)));
+  }
+  const totalNegociando = ativos.reduce((s, n) => s + (n.valor || 0), 0);
+  const taxaConversao = lerNum(CHAVE_NEG_TAXA, 50) / 100;
+  $('neg-total-negociando').textContent = formatarReais(totalNegociando);
+  $('neg-total-projetado').textContent = formatarReais(totalNegociando * taxaConversao);
+}
+
+function linhaNegociacao(n) {
+  const el = document.createElement('div');
+  el.className = 'item';
+
+  const info = document.createElement('div');
+  const nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = n.nome;
+  const linha1 = document.createElement('div'); linha1.className = 'meta';
+  linha1.textContent = 'Pacote ' + n.pacote + ' · ' + formatarReais(n.valor || 0) + (n.observacao ? ' · ' + n.observacao : '');
+  const linha2 = document.createElement('div'); linha2.className = 'meta';
+  const tagStatus = document.createElement('span');
+  tagStatus.className = 'tag ' + (n.status === 'convertido' ? 'ok' : n.status === 'perdido' ? 'canc' : 'aguard');
+  tagStatus.textContent = STATUS_NEG_LABEL[n.status] || n.status;
+  linha2.appendChild(tagStatus);
+  if (n.whatsapp) {
+    const zap = document.createElement('a'); zap.className = 'zap'; zap.target = '_blank'; zap.rel = 'noopener';
+    zap.href = 'https://wa.me/' + n.whatsapp; zap.textContent = n.whatsapp;
+    linha2.appendChild(zap);
+  }
+  info.appendChild(nome); info.appendChild(linha1); info.appendChild(linha2);
+
+  const acoes = document.createElement('div'); acoes.className = 'acoes';
+  if (n.status === 'negociando') {
+    const c = document.createElement('button'); c.className = 'btn prim'; c.type = 'button'; c.textContent = 'Converteu';
+    c.addEventListener('click', () => negociacaoMudarStatus(n, 'convertido', c));
+    acoes.appendChild(c);
+    const p = document.createElement('button'); p.className = 'btn ghost'; p.type = 'button'; p.textContent = 'Perdido';
+    p.addEventListener('click', () => negociacaoMudarStatus(n, 'perdido', p));
+    acoes.appendChild(p);
+  } else {
+    const r = document.createElement('button'); r.className = 'btn ghost'; r.type = 'button'; r.textContent = 'Reabrir';
+    r.addEventListener('click', () => negociacaoMudarStatus(n, 'negociando', r));
+    acoes.appendChild(r);
+  }
+  const x = document.createElement('button'); x.className = 'btn ghost'; x.type = 'button'; x.textContent = 'Excluir';
+  x.addEventListener('click', () => negociacaoExcluir(n, x));
+  acoes.appendChild(x);
+
+  el.appendChild(info); el.appendChild(acoes);
+  return el;
+}
+
+async function negociacaoMudarStatus(n, novoStatus, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'negociacao_status', senha: senha, id: n.id, status: novoStatus });
+    if (!r.ok) { $('neg-erro').textContent = r.erro; botao.disabled = false; return; }
+    await carregarNegociacao();
+  } catch (e) {
+    $('neg-erro').textContent = 'Não consegui salvar. Tente de novo.';
+    botao.disabled = false;
+  }
+}
+
+async function negociacaoExcluir(n, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'negociacao_excluir', senha: senha, id: n.id });
+    if (!r.ok) { $('neg-erro').textContent = r.erro; botao.disabled = false; return; }
+    await carregarNegociacao();
+  } catch (e) {
+    $('neg-erro').textContent = 'Não consegui excluir. Tente de novo.';
+    botao.disabled = false;
+  }
+}
+
+$('neg-adicionar').addEventListener('click', async () => {
+  $('neg-erro').textContent = '';
+  const nome = $('neg-nome').value.trim();
+  const whatsapp = $('neg-whatsapp').value.replace(/\D/g, '');
+  const pacote = $('neg-pacote').value;
+  const observacao = $('neg-obs').value.trim();
+  if (nome.length < 2) { $('neg-erro').textContent = 'Informe o nome do lead.'; return; }
+  if (!pacote) { $('neg-erro').textContent = 'Escolha um pacote.'; return; }
+  const botao = $('neg-adicionar');
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'negociacao_criar', senha: senha, nome: nome, whatsapp: whatsapp, pacote: pacote, observacao: observacao });
+    if (!r.ok) { $('neg-erro').textContent = r.erro; botao.disabled = false; return; }
+    $('neg-nome').value = ''; $('neg-whatsapp').value = ''; $('neg-obs').value = '';
+    await carregarNegociacao();
+  } catch (e) {
+    $('neg-erro').textContent = 'Não consegui salvar. Tente de novo.';
+  }
+  botao.disabled = false;
+});
+
+$('neg-taxa-conversao').addEventListener('input', () => {
+  guardarNum(CHAVE_NEG_TAXA, $('neg-taxa-conversao').value || 0);
+  desenharNegociacao();
+  desenharMeta();
+});
 
 /* já logada nesta aba? entra direto */
 if (lerSenha()) { senha = lerSenha(); entrarPainel(); }
