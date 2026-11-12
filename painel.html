@@ -220,6 +220,15 @@ a.zap:hover{text-decoration:underline}
           <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
         </div>
       </div>
+      <div class="card">
+        <div class="bloco-titulo">Faturamento por origem do lead</div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Indicação</div><div class="numero" id="fin-origem-indicacao">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Orgânico</div><div class="numero" id="fin-origem-organico">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Anúncio</div><div class="numero" id="fin-origem-anuncio">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Não informado</div><div class="numero" id="fin-origem-vazio">R$ 0,00</div></div>
+        </div>
+      </div>
       <div id="financeiro-lista"></div>
     </div>
 
@@ -467,6 +476,17 @@ function desenhar() {
   const custo = ativos.reduce((s, a) => s + custoDe(a), 0);
   $('fin-custo').textContent = formatarReais(custo);
   $('fin-lucro').textContent = formatarReais(pago + saldo - custo);
+
+  const faturaPorOrigem = { 'Indicação': 0, 'Orgânico': 0, 'Anúncio': 0, '': 0 };
+  ativos.forEach((a) => {
+    const contrib = (a.status === STATUS_OK ? lerReais(a.sinal_txt) : 0) + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a);
+    const chave = ORIGENS.indexOf(a.origem) !== -1 ? a.origem : '';
+    faturaPorOrigem[chave] += contrib;
+  });
+  $('fin-origem-indicacao').textContent = formatarReais(faturaPorOrigem['Indicação']);
+  $('fin-origem-organico').textContent = formatarReais(faturaPorOrigem['Orgânico']);
+  $('fin-origem-anuncio').textContent = formatarReais(faturaPorOrigem['Anúncio']);
+  $('fin-origem-vazio').textContent = formatarReais(faturaPorOrigem['']);
 
   const aguard = dados.filter((a) => a.status === STATUS_AGUARDA).length;
   const ok = dados.filter((a) => a.status === STATUS_OK).length;
