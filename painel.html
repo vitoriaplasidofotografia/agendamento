@@ -74,6 +74,7 @@ input:focus,select:focus{border-color:var(--blue)}
 .tag.resta{color:var(--blue);background:var(--blue-soft)}
 .tag.extras{color:var(--purple);background:var(--purple-soft)}
 .tag.origem{color:var(--soft);background:var(--bg2)}
+.select-origem{font-family:var(--sans);font-size:12px;color:var(--soft);background:var(--bg2);border:1px solid var(--line);border-radius:var(--raio-p);padding:2px 6px}
 .acoes{display:flex;flex-direction:column;gap:6px}
 .acoes .btn{padding:8px 12px;font-size:12px;white-space:nowrap}
 .item.negociacao{grid-template-columns:1fr auto}
@@ -1260,10 +1261,16 @@ function linhaNegociacao(n) {
   tagStatus.className = 'tag ' + (n.status === 'convertido' ? 'ok' : n.status === 'perdido' ? 'canc' : 'aguard');
   tagStatus.textContent = STATUS_NEG_LABEL[n.status] || n.status;
   linha2.appendChild(tagStatus);
-  if (n.origem) {
-    const tagOrigem = document.createElement('span'); tagOrigem.className = 'tag origem'; tagOrigem.textContent = n.origem;
-    linha2.appendChild(tagOrigem);
-  }
+  const selOrigem = document.createElement('select'); selOrigem.className = 'select-origem';
+  const opVazia = document.createElement('option'); opVazia.value = ''; opVazia.textContent = 'De onde veio?';
+  selOrigem.appendChild(opVazia);
+  ORIGENS.forEach((o) => {
+    const op = document.createElement('option'); op.value = o; op.textContent = o;
+    if (n.origem === o) op.selected = true;
+    selOrigem.appendChild(op);
+  });
+  selOrigem.addEventListener('change', () => negociacaoMudarOrigem(n, selOrigem.value, selOrigem));
+  linha2.appendChild(selOrigem);
   if (n.whatsapp) {
     const zap = document.createElement('a'); zap.className = 'zap'; zap.target = '_blank'; zap.rel = 'noopener';
     zap.href = 'https://wa.me/' + n.whatsapp; zap.textContent = n.whatsapp;
@@ -1301,6 +1308,18 @@ async function negociacaoMudarStatus(n, novoStatus, botao) {
   } catch (e) {
     $('neg-erro').textContent = 'Não consegui salvar. Tente de novo.';
     botao.disabled = false;
+  }
+}
+
+async function negociacaoMudarOrigem(n, origem, select) {
+  select.disabled = true;
+  try {
+    const r = await chamar({ acao: 'negociacao_origem', senha: senha, id: n.id, origem: origem });
+    if (!r.ok) { $('neg-erro').textContent = r.erro; select.disabled = false; return; }
+    await carregarNegociacao();
+  } catch (e) {
+    $('neg-erro').textContent = 'Não consegui salvar. Tente de novo.';
+    select.disabled = false;
   }
 }
 
