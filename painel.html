@@ -313,6 +313,7 @@ a.zap:hover{text-decoration:underline}
         <div class="financas">
           <div class="fin editavel"><label for="meta-anuncios-mensagens">Mensagens recebidas</label><input type="number" id="meta-anuncios-mensagens" min="0" step="1" placeholder="Ex.: 40"></div>
           <div class="fin"><div class="rotulo">Vendas fechadas (agendado, origem anúncio)</div><div class="numero" id="meta-anuncios-vendas">0</div></div>
+          <div class="fin"><div class="rotulo">Vendas sendo negociadas (origem anúncio)</div><div class="numero" id="meta-anuncios-vendas-negociando">0</div></div>
           <div class="fin"><div class="rotulo">Taxa mensagem → venda</div><div class="numero" id="meta-anuncios-taxa-msg-venda">—</div></div>
         </div>
         <div class="financas">
@@ -1206,7 +1207,9 @@ function desenharMeta() {
 
   const mensagensAnuncios = lerNum(CHAVE_ANUNCIOS_MENSAGENS, 0);
   const vendasAnuncio = qtdPorOrigem['agendado-Anúncio'] || 0;
+  const vendasAnuncioNegociando = qtdPorOrigem['negociando-Anúncio'] || 0;
   $('meta-anuncios-vendas').textContent = vendasAnuncio;
+  $('meta-anuncios-vendas-negociando').textContent = vendasAnuncioNegociando;
   $('meta-anuncios-taxa-msg-venda').textContent = mensagensAnuncios > 0 ? (vendasAnuncio / mensagensAnuncios * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—';
   $('meta-anuncios-custo-mensagem').textContent = mensagensAnuncios > 0 ? formatarReais(investimentoAnuncios / mensagensAnuncios) : '—';
   $('meta-anuncios-custo-venda').textContent = vendasAnuncio > 0 ? formatarReais(investimentoAnuncios / vendasAnuncio) : '—';
