@@ -307,6 +307,20 @@ a.zap:hover{text-decoration:underline}
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">Retorno conta as sessões cuja origem do lead é "Anúncio" (valor total do pacote + extras). Lucro/ROI só aparece com um valor investido preenchido.</p>
       </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Métricas do anúncio</div>
+        <div class="financas">
+          <div class="fin editavel"><label for="meta-anuncios-mensagens">Mensagens recebidas</label><input type="number" id="meta-anuncios-mensagens" min="0" step="1" placeholder="Ex.: 40"></div>
+          <div class="fin"><div class="rotulo">Vendas fechadas (agendado, origem anúncio)</div><div class="numero" id="meta-anuncios-vendas">0</div></div>
+          <div class="fin"><div class="rotulo">Taxa mensagem → venda</div><div class="numero" id="meta-anuncios-taxa-msg-venda">—</div></div>
+        </div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Custo por mensagem</div><div class="numero" id="meta-anuncios-custo-mensagem">—</div></div>
+          <div class="fin"><div class="rotulo">Custo por venda (CAC)</div><div class="numero" id="meta-anuncios-custo-venda">—</div></div>
+        </div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">Mensagens recebidas você digita (vem do Gerenciador de Anúncios). O custo por mensagem e por venda usam o valor investido em anúncios, informado no bloco acima.</p>
+      </div>
     </div>
 
     <div id="view-negociacao" hidden>
@@ -1025,6 +1039,7 @@ function entrarPainel() {
   $('meta-preco-extra').value = lerNum(CHAVE_PRECO_EXTRA, PRECO_FOTO_EXTRA);
   $('meta-media-extras').value = lerNum(CHAVE_MEDIA_EXTRAS, 0);
   $('meta-anuncios-investimento').value = lerNum(CHAVE_ANUNCIOS_INVESTIMENTO, 0);
+  $('meta-anuncios-mensagens').value = lerNum(CHAVE_ANUNCIOS_MENSAGENS, 0);
   $('neg-taxa-conversao').value = lerNum(CHAVE_NEG_TAXA, 50);
   carregar();
   carregarPacotes();
@@ -1082,6 +1097,7 @@ const CHAVE_META = 'painel-meta-valor';
 const CHAVE_PRECO_EXTRA = 'painel-meta-preco-extra';
 const CHAVE_MEDIA_EXTRAS = 'painel-meta-media-extras';
 const CHAVE_ANUNCIOS_INVESTIMENTO = 'painel-meta-anuncios-investimento';
+const CHAVE_ANUNCIOS_MENSAGENS = 'painel-meta-anuncios-mensagens';
 let capacidadeLivre = null;
 
 async function carregarCapacidade() {
@@ -1187,12 +1203,20 @@ function desenharMeta() {
   const liquido = retornoAnuncios + negociandoAnuncioProjetado - investimentoAnuncios;
   liquidoEl.textContent = formatarReais(liquido);
   liquidoEl.style.color = liquido >= 0 ? 'var(--green)' : 'var(--danger)';
+
+  const mensagensAnuncios = lerNum(CHAVE_ANUNCIOS_MENSAGENS, 0);
+  const vendasAnuncio = qtdPorOrigem['agendado-Anúncio'] || 0;
+  $('meta-anuncios-vendas').textContent = vendasAnuncio;
+  $('meta-anuncios-taxa-msg-venda').textContent = mensagensAnuncios > 0 ? (vendasAnuncio / mensagensAnuncios * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—';
+  $('meta-anuncios-custo-mensagem').textContent = mensagensAnuncios > 0 ? formatarReais(investimentoAnuncios / mensagensAnuncios) : '—';
+  $('meta-anuncios-custo-venda').textContent = vendasAnuncio > 0 ? formatarReais(investimentoAnuncios / vendasAnuncio) : '—';
 }
 
 $('meta-valor').addEventListener('input', () => { guardarNum(CHAVE_META, $('meta-valor').value || 0); desenharMeta(); });
 $('meta-preco-extra').addEventListener('input', () => { guardarNum(CHAVE_PRECO_EXTRA, $('meta-preco-extra').value || 0); desenharMeta(); });
 $('meta-media-extras').addEventListener('input', () => { guardarNum(CHAVE_MEDIA_EXTRAS, $('meta-media-extras').value || 0); desenharMeta(); });
 $('meta-anuncios-investimento').addEventListener('input', () => { guardarNum(CHAVE_ANUNCIOS_INVESTIMENTO, $('meta-anuncios-investimento').value || 0); desenharMeta(); });
+$('meta-anuncios-mensagens').addEventListener('input', () => { guardarNum(CHAVE_ANUNCIOS_MENSAGENS, $('meta-anuncios-mensagens').value || 0); desenharMeta(); });
 
 /* ---------- aba Em negociação ---------- */
 const CHAVE_NEG_TAXA = 'painel-neg-taxa-conversao';
