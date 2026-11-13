@@ -314,11 +314,13 @@ a.zap:hover{text-decoration:underline}
           <div class="fin editavel"><label for="meta-anuncios-mensagens">Mensagens recebidas</label><input type="number" id="meta-anuncios-mensagens" min="0" step="1" placeholder="Ex.: 40"></div>
           <div class="fin"><div class="rotulo">Vendas fechadas (agendado, origem anúncio)</div><div class="numero" id="meta-anuncios-vendas">0</div></div>
           <div class="fin"><div class="rotulo">Vendas sendo negociadas (origem anúncio)</div><div class="numero" id="meta-anuncios-vendas-negociando">0</div></div>
-          <div class="fin"><div class="rotulo">Taxa mensagem → venda</div><div class="numero" id="meta-anuncios-taxa-msg-venda">—</div></div>
+          <div class="fin"><div class="rotulo">Taxa mensagem → venda atual</div><div class="numero" id="meta-anuncios-taxa-msg-venda">—</div></div>
+          <div class="fin"><div class="rotulo">Taxa mensagem → venda possível (c/ negociações)</div><div class="numero" id="meta-anuncios-taxa-msg-venda-possivel">—</div></div>
         </div>
         <div class="financas">
           <div class="fin"><div class="rotulo">Custo por mensagem</div><div class="numero" id="meta-anuncios-custo-mensagem">—</div></div>
-          <div class="fin"><div class="rotulo">Custo por venda (CAC)</div><div class="numero" id="meta-anuncios-custo-venda">—</div></div>
+          <div class="fin"><div class="rotulo">Custo por venda atual (CAC)</div><div class="numero" id="meta-anuncios-custo-venda">—</div></div>
+          <div class="fin"><div class="rotulo">Custo por venda possível (c/ negociações)</div><div class="numero" id="meta-anuncios-custo-venda-possivel">—</div></div>
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">Mensagens recebidas você digita (vem do Gerenciador de Anúncios). O custo por mensagem e por venda usam o valor investido em anúncios, informado no bloco acima.</p>
       </div>
@@ -1211,8 +1213,11 @@ function desenharMeta() {
   $('meta-anuncios-vendas').textContent = vendasAnuncio;
   $('meta-anuncios-vendas-negociando').textContent = vendasAnuncioNegociando;
   $('meta-anuncios-taxa-msg-venda').textContent = mensagensAnuncios > 0 ? (vendasAnuncio / mensagensAnuncios * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—';
+  $('meta-anuncios-taxa-msg-venda-possivel').textContent = mensagensAnuncios > 0 ? ((vendasAnuncio + vendasAnuncioNegociando) / mensagensAnuncios * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—';
   $('meta-anuncios-custo-mensagem').textContent = mensagensAnuncios > 0 ? formatarReais(investimentoAnuncios / mensagensAnuncios) : '—';
   $('meta-anuncios-custo-venda').textContent = vendasAnuncio > 0 ? formatarReais(investimentoAnuncios / vendasAnuncio) : '—';
+  const vendasPossiveis = vendasAnuncio + vendasAnuncioNegociando;
+  $('meta-anuncios-custo-venda-possivel').textContent = vendasPossiveis > 0 ? formatarReais(investimentoAnuncios / vendasPossiveis) : '—';
 }
 
 $('meta-valor').addEventListener('input', () => { guardarNum(CHAVE_META, $('meta-valor').value || 0); desenharMeta(); });
