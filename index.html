@@ -157,6 +157,10 @@ label.aceite input{margin-top:3px}
     <button class="back" id="voltar-hora">← Trocar o horário</button>
     <h2>Seus dados</h2>
     <p class="resumo" id="resumo"></p>
+    <div class="politica" id="aviso-entrega" style="border-color:var(--danger)" hidden>
+      <b>Atenção aos prazos de dezembro</b>
+      <p style="margin:8px 0 0">Para sessões agendadas entre os dias 10 e 19 de dezembro, não conseguimos nos responsabilizar pela entrega das mídias físicas (fotos impressas, ímã, bolinha de Natal) antes do dia 25 de dezembro, por conta do alto volume dessa época. As mídias digitais serão entregues normalmente, sem atraso.</p>
+    </div>
     <form id="form">
       <label for="nome">Nome completo</label>
       <input type="text" id="nome" autocomplete="name" required>
@@ -189,6 +193,10 @@ label.aceite input{margin-top:3px}
   <section class="card" id="passo-pix" hidden>
     <h2>Quase lá!</h2>
     <p class="resumo" id="resumo-final"></p>
+    <div class="politica" id="aviso-entrega-pix" style="border-color:var(--danger)" hidden>
+      <b>Atenção aos prazos de dezembro</b>
+      <p style="margin:8px 0 0">Sua sessão caiu entre 10 e 19 de dezembro: não conseguimos nos responsabilizar pela entrega das mídias físicas antes do dia 25 de dezembro, por conta do alto volume dessa época. As mídias digitais serão entregues normalmente, sem atraso.</p>
+    </div>
     <div class="totais">
       <span>Pacote <b id="pix-pacote"></b></span>
       <span id="pix-valor-pacote"></span>
@@ -262,6 +270,11 @@ const ULTIMA_SEMANA_DE = '2026-12-13'; // última semana antes do limite da agen
 const ULTIMA_SEMANA_ATE = '2026-12-19';
 // horários forçados a aparecer livres mesmo se o sorteio da escassez marcaria como "reservado" ('data-horario')
 const ESCASSEZ_FORCAR_LIVRE = ['2026-11-20-10:30'];
+
+// sessões agendadas nesse intervalo recebem o aviso de que a mídia física pode não chegar antes do dia 25/12
+const AVISO_ENTREGA_DE = '2026-12-10';
+const AVISO_ENTREGA_ATE = '2026-12-19';
+function precisaAvisoEntrega(s) { return s >= AVISO_ENTREGA_DE && s <= AVISO_ENTREGA_ATE; }
 
 function hashTexto(s) {
   let h = 0;
@@ -426,6 +439,7 @@ function escolherHora(h) {
   const s = document.createElement('small');
   s.textContent = 'Pacote ' + escolha.pacote.nome + ' · cenário ' + escolha.cenario + ' · ' + escolha.pacote.valor_txt + ' · sinal 30%: ' + escolha.pacote.sinal_txt;
   $('resumo').appendChild(b); $('resumo').appendChild(s);
+  $('aviso-entrega').hidden = !precisaAvisoEntrega(escolha.data);
   $('erro-dados').textContent = '';
   passo(5);
 }
@@ -469,6 +483,7 @@ function mostrarPix(r) {
   $('pix-valor-pacote').textContent = 'Valor: ' + r.valor_txt;
   $('pix-sinal').textContent = r.sinal_txt;
   $('chave-pix').textContent = r.chave_pix;
+  $('aviso-entrega-pix').hidden = !precisaAvisoEntrega(r.data);
   const msg = 'Olá, Vitória! Segue o comprovante do sinal (30%) do pacote ' + r.pacote +
     ', sessão de ' + textoData(r.data) + ' às ' + r.inicio + ' (código ' + r.id + '). Nome: ' + $('nome').value + '.';
   $('btn-comprovante').href = 'https://wa.me/' + (r.whatsapp || whatsappVitoria) + '?text=' + encodeURIComponent(msg);
