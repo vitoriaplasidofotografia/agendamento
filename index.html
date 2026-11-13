@@ -391,7 +391,9 @@ async function escolherDia(s) {
   passo(4);
   try {
     const r = await api({ acao: 'horarios', data: s });
-    const horarios = classificarHorariosEscassez(s, r.ok ? r.horarios : []);
+    const classificados = classificarHorariosEscassez(s, r.ok ? r.horarios : []);
+    const ocupadosDeVerdade = (r.ok ? r.ocupados || [] : []).map((h) => ({ h, livre: false }));
+    const horarios = classificados.concat(ocupadosDeVerdade).sort((a, b) => a.h.localeCompare(b.h));
     $('horarios').innerHTML = '';
     if (!horarios.length) {
       $('horarios').innerHTML = '<p class="sub" style="grid-column:1/-1">Não há horários livres neste dia. Escolha outra data.</p>';
