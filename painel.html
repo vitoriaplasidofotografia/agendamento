@@ -271,6 +271,12 @@ a.zap:hover{text-decoration:underline}
       </div>
 
       <div class="card">
+        <div class="bloco-titulo">Quantidade de agendamentos por origem</div>
+        <div class="financas" id="meta-qtd-origem"></div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0" id="meta-qtd-origem-vazio" hidden>Ainda não há agendamentos nem leads em negociação com origem informada.</p>
+      </div>
+
+      <div class="card">
         <div class="bloco-titulo">Com os leads em negociação</div>
         <div class="financas">
           <div class="fin"><div class="rotulo">Em negociação (valor cheio dos pacotes)</div><div class="numero" id="meta-negociacao-total">R$ 0,00</div></div>
@@ -1118,6 +1124,30 @@ function desenharMeta() {
     cabeEl.textContent = cabe ? 'sim' : 'não, falta(m) ' + (sessoesNecessarias - capacidadeLivre);
     cabeEl.style.color = cabe ? 'var(--green)' : 'var(--danger)';
   }
+
+  const qtdPorOrigem = {};
+  ativos.forEach((a) => {
+    const chave = 'agendado-' + (ORIGENS.indexOf(a.origem) !== -1 ? a.origem : 'Não informado');
+    qtdPorOrigem[chave] = (qtdPorOrigem[chave] || 0) + 1;
+  });
+  negociacoes.filter((n) => n.status === 'negociando').forEach((n) => {
+    const chave = 'negociando-' + (ORIGENS.indexOf(n.origem) !== -1 ? n.origem : 'Não informado');
+    qtdPorOrigem[chave] = (qtdPorOrigem[chave] || 0) + 1;
+  });
+  const contOrigem = $('meta-qtd-origem');
+  contOrigem.innerHTML = '';
+  let temAlgumaOrigem = false;
+  [['Agendado', 'agendado'], ['Negociando', 'negociando']].forEach(([titulo, prefixo]) => {
+    ORIGENS.concat(['Não informado']).forEach((o) => {
+      const qtd = qtdPorOrigem[prefixo + '-' + o] || 0;
+      if (!qtd) return;
+      temAlgumaOrigem = true;
+      const div = document.createElement('div'); div.className = 'fin';
+      div.innerHTML = '<div class="rotulo">' + titulo + ' · ' + o + '</div><div class="numero">' + qtd + '</div>';
+      contOrigem.appendChild(div);
+    });
+  });
+  $('meta-qtd-origem-vazio').hidden = temAlgumaOrigem;
 
   const totalNegociando = negociacoes.filter((n) => n.status === 'negociando').reduce((s, n) => s + (n.valor || 0), 0);
   const taxaConversao = lerNum(CHAVE_NEG_TAXA, 50) / 100;
