@@ -183,6 +183,7 @@ a.zap:hover{text-decoration:underline}
       <button class="aba" id="aba-meta" type="button">Meta</button>
       <button class="aba" id="aba-kanban" type="button">Kanban</button>
       <button class="aba" id="aba-negociacao" type="button">Em negociação</button>
+      <button class="aba" id="aba-anuncios" type="button">Anúncios</button>
     </div>
 
     <div class="card" id="card-filtros">
@@ -288,6 +289,10 @@ a.zap:hover{text-decoration:underline}
         <p class="atualiza" style="text-align:left;margin:8px 0 0">A taxa de conversão é ajustada na aba "Em negociação".</p>
       </div>
 
+      <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
+    </div>
+
+    <div id="view-anuncios" hidden>
       <div class="card">
         <div class="bloco-titulo">Anúncios</div>
         <div class="financas">
@@ -302,7 +307,6 @@ a.zap:hover{text-decoration:underline}
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">Retorno conta as sessões cuja origem do lead é "Anúncio" (valor total do pacote + extras). Lucro/ROI só aparece com um valor investido preenchido.</p>
       </div>
-      <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
     </div>
 
     <div id="view-negociacao" hidden>
@@ -1056,8 +1060,8 @@ $('periodo').addEventListener('change', () => {
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 function trocarAba(ativa) {
-  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao' };
-  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao' };
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios' };
   Object.keys(abas).forEach((k) => {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
@@ -1069,6 +1073,7 @@ $('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
 $('aba-meta').addEventListener('click', () => trocarAba('meta'));
 $('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
 $('aba-negociacao').addEventListener('click', () => trocarAba('negociacao'));
+$('aba-anuncios').addEventListener('click', () => trocarAba('anuncios'));
 
 /* ---------- aba Meta ---------- */
 function lerNum(chave, padrao) { try { const v = localStorage.getItem(chave); return v === null ? padrao : Number(v); } catch (e) { return padrao; } }
