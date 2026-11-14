@@ -154,6 +154,11 @@ a.zap:hover{text-decoration:underline}
 .modal-linha .val{color:var(--ink);font-weight:500;text-align:right}
 .modal-secao{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:16px 0 2px}
 .modal-secao:first-of-type{margin-top:12px}
+.btn-lapis{appearance:none;border:0;background:none;cursor:pointer;font-size:13px;padding:0 0 0 6px;line-height:1;vertical-align:middle}
+.edicao-sinal{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.edicao-sinal input{width:100px;border:1px solid var(--line-forte);border-radius:8px;padding:4px 8px;font-size:13px;text-align:right}
+.edicao-sinal button{appearance:none;border:0;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;background:var(--blue);color:#fff}
+.edicao-sinal button.cancelar{background:var(--panel);color:var(--soft);border:1px solid var(--line-forte)}
 [hidden]{display:none!important}
 @media (max-width:480px){.item{grid-template-columns:58px 1fr}.acoes{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
 </style>
@@ -730,7 +735,13 @@ function abrirModal(a, etapa) {
   html += '<div class="modal-secao">Financeiro</div>';
   html += linhaModal('Pacote', a.pacote);
   html += linhaModal('Valor total', a.valor_txt);
-  html += linhaModal('Sinal', a.sinal_txt + ' (' + a.status + ')');
+  html += '<div class="modal-linha"><span class="rot">Sinal</span><span class="val">' + a.sinal_txt + ' (' + a.status + ')<button class="btn-lapis" id="modal-sinal-editar" type="button" title="Editar valor do sinal recebido">✏️</button></span></div>';
+  html += '<div class="edicao-sinal" id="modal-sinal-edicao" hidden style="margin:2px 0 8px">';
+  html += '<input type="number" id="modal-sinal-input" min="0" step="0.01" value="' + lerReais(a.sinal_txt).toFixed(2) + '">';
+  html += '<button type="button" id="modal-sinal-salvar">Salvar</button>';
+  html += '<button type="button" class="cancelar" id="modal-sinal-cancelar">Cancelar</button>';
+  html += '</div>';
+  html += '<p id="modal-sinal-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   if (a.status !== STATUS_CANC) {
     html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
     html += linhaModal('Fotos extras', (a.fotos_extras || 0) + ' · ' + formatarReais(extrasValorDe(a)));
@@ -752,6 +763,30 @@ function abrirModal(a, etapa) {
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
   $('modal-fechar').addEventListener('click', fecharModal);
+  $('modal-sinal-editar').addEventListener('click', () => {
+    $('modal-sinal-edicao').hidden = false;
+    $('modal-sinal-input').focus();
+  });
+  $('modal-sinal-cancelar').addEventListener('click', () => { $('modal-sinal-edicao').hidden = true; });
+  $('modal-sinal-salvar').addEventListener('click', async () => {
+    const valor = Number($('modal-sinal-input').value);
+    const msgSinal = $('modal-sinal-msg');
+    if (isNaN(valor) || valor < 0) { msgSinal.textContent = 'Informe um valor válido.'; return; }
+    const botaoSinal = $('modal-sinal-salvar');
+    botaoSinal.disabled = true; botaoSinal.textContent = 'Salvando…';
+    msgSinal.textContent = '';
+    try {
+      const r = await chamar({ acao: 'sinal', senha: senha, id: a.id, valor: valor });
+      if (!r.ok) { msgSinal.textContent = r.erro; return; }
+      a.sinal_txt = r.sinal_txt;
+      abrirModal(a, etapa);
+      carregar();
+    } catch (err) {
+      msgSinal.textContent = 'Não consegui salvar. Tente de novo.';
+    } finally {
+      botaoSinal.disabled = false; botaoSinal.textContent = 'Salvar';
+    }
+  });
   $('modal-origem').addEventListener('change', async (e) => {
     const msgOrigem = $('modal-origem-msg');
     msgOrigem.textContent = 'Salvando…';
