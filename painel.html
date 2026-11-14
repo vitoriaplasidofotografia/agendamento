@@ -390,14 +390,19 @@ function formatarReais(v) {
 const CUSTO_PACOTE = { 'Laço': 0, 'Presente': 22.50, 'Bênção': 43.15 };
 function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0; }
 /* valor de cada fotografia extra, cobrada além do pacote (mesmo valor informado na galeria Alboom) */
-/* até 4 fotos extras: R$14,90 cada · a partir de 5 fotos extras: R$9,90 cada (todas no valor menor) */
-const PRECO_FOTO_EXTRA = 14.90;
-const PRECO_FOTO_EXTRA_ACIMA5 = 9.90;
-function valorFotosExtras(q) {
+/* até 4 fotos extras: preço cheio do lote · a partir de 5 fotos extras: preço promocional do lote (todas no valor menor) */
+/* varia por lote (1º/2º/3º), conforme o lote em que a cliente fez a reserva */
+const FOTO_EXTRA_CHEIA_LOTE = [14.90, 16.90, 19.90];
+const FOTO_EXTRA_PROMO_LOTE = [9.90, 11.90, 14.90];
+const LOTE_NOMES = ['1º lote', '2º lote', '3º lote'];
+const PRECO_FOTO_EXTRA = FOTO_EXTRA_CHEIA_LOTE[0];
+const PRECO_FOTO_EXTRA_ACIMA5 = FOTO_EXTRA_PROMO_LOTE[0];
+function valorFotosExtras(q, lote) {
   q = Math.max(0, q || 0);
-  return q * (q <= 4 ? PRECO_FOTO_EXTRA : PRECO_FOTO_EXTRA_ACIMA5);
+  const i = Math.min(Math.max(lote || 0, 0), FOTO_EXTRA_CHEIA_LOTE.length - 1);
+  return q * (q <= 4 ? FOTO_EXTRA_CHEIA_LOTE[i] : FOTO_EXTRA_PROMO_LOTE[i]);
 }
-function extrasValorDe(a) { return valorFotosExtras(a.fotos_extras || 0); }
+function extrasValorDe(a) { return valorFotosExtras(a.fotos_extras || 0, a.lote); }
 /* prazos de entrega, em dias corridos após a sessão */
 const PRAZO_DIGITAL_DIAS = 6;
 const PRAZO_FISICO_DIAS = 10;
@@ -733,6 +738,7 @@ function abrirModal(a, etapa) {
   html += '<p id="modal-origem-msg" style="font-size:12px;color:var(--green);margin:4px 0 0"></p>';
   html += '<div class="modal-secao">Financeiro</div>';
   html += linhaModal('Pacote', a.pacote);
+  html += linhaModal('Lote da reserva', LOTE_NOMES[Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1)]);
   html += linhaModal('Valor total', a.valor_txt);
   html += '<div class="modal-linha"><span class="rot">Sinal</span><span class="val">' + a.sinal_txt + ' (' + a.status + ')<button class="btn-lapis" id="modal-sinal-editar" type="button" title="Editar valor do sinal recebido">✏️</button></span></div>';
   html += '<div class="edicao-sinal" id="modal-sinal-edicao" hidden style="margin:2px 0 8px">';
@@ -980,12 +986,14 @@ function abrirModalFinanceiro(a) {
   html += '<h2>' + a.nome + '</h2>';
   html += '<div class="modal-secao">Pacote</div>';
   html += linhaModal('Pacote', a.pacote);
+  html += linhaModal('Lote da reserva', LOTE_NOMES[Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1)]);
   html += linhaModal('Valor total', a.valor_txt);
   html += linhaModal('Sinal (30%)', a.sinal_txt + ' · ' + (a.status === STATUS_OK ? 'pago' : a.status === STATUS_CANC ? 'cancelado' : 'pendente'));
   if (a.status !== STATUS_CANC) {
     html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
     html += '<button class="btn ' + (a.saldo_pago ? 'ghost' : 'prim') + '" id="modal-saldo-botao" type="button" style="width:100%;margin-top:4px">' + (a.saldo_pago ? 'Desfazer pago pacote' : 'Marcar pago pacote') + '</button>';
-    html += '<div class="modal-secao">Fotos extras (até 4: R$ ' + PRECO_FOTO_EXTRA.toFixed(2).replace('.', ',') + ' cada · 5 ou mais: R$ ' + PRECO_FOTO_EXTRA_ACIMA5.toFixed(2).replace('.', ',') + ' cada)</div>';
+    const idxLote = Math.min(Math.max(a.lote || 0, 0), FOTO_EXTRA_CHEIA_LOTE.length - 1);
+    html += '<div class="modal-secao">Fotos extras (' + LOTE_NOMES[idxLote] + ' · até 4: R$ ' + FOTO_EXTRA_CHEIA_LOTE[idxLote].toFixed(2).replace('.', ',') + ' cada · 5 ou mais: R$ ' + FOTO_EXTRA_PROMO_LOTE[idxLote].toFixed(2).replace('.', ',') + ' cada)</div>';
     html += '<div class="modal-linha"><span class="rot">Quantidade adquirida</span><span class="val"><input type="number" id="modal-extras-qtd" min="0" step="1" value="' + extras + '" style="width:80px;text-align:right;padding:4px 8px"></span></div>';
     html += linhaModal('Total em fotos extras', '<span id="modal-extras-total">' + formatarReais(extrasTotalValor) + '</span>');
     html += '<button class="btn prim" id="modal-extras-salvar" type="button" style="width:100%;margin-top:10px">Salvar fotos extras</button>';

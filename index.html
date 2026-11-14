@@ -141,6 +141,10 @@ label.aceite input{margin-top:3px}
     </div>
     <div class="grid" id="calendario"></div>
     <p class="legend">Dias disponíveis aparecem em destaque. Cada sessão dura 1 hora.</p>
+    <div class="politica" style="margin-top:14px">
+      <b>Valores por lote</b>
+      <p style="margin:8px 0 0">O valor do pacote segue o lote vigente hoje, na data da sua reserva: <b>1º lote</b> até 22/11, <b>2º lote</b> de 23/11 a 10/12, <b>3º lote</b> de 11/12 a 19/12. Sessões de segunda a sexta-feira têm <b>10% de desconto</b> nos pacotes Presente e Bênção (aplicado automaticamente ao escolher a data, válido a partir do 2º lote).</p>
+    </div>
   </section>
 
   <!-- 3. horário -->
@@ -403,7 +407,14 @@ async function escolherDia(s) {
   $('erro-hora').textContent = '';
   passo(4);
   try {
-    const r = await api({ acao: 'horarios', data: s });
+    const [r, cfgData] = await Promise.all([
+      api({ acao: 'horarios', data: s }),
+      api({ acao: 'config', data: s }),
+    ]);
+    if (cfgData.ok && escolha.pacote) {
+      const atualizado = (cfgData.pacotes || []).filter((p) => p.nome === escolha.pacote.nome)[0];
+      if (atualizado) escolha.pacote = Object.assign({}, escolha.pacote, atualizado);
+    }
     const classificados = classificarHorariosEscassez(s, r.ok ? r.horarios : []);
     const ocupadosDeVerdade = (r.ok ? r.ocupados || [] : []).map((h) => ({ h, livre: false }));
     const horarios = classificados.concat(ocupadosDeVerdade).sort((a, b) => a.h.localeCompare(b.h));
@@ -439,6 +450,12 @@ function escolherHora(h) {
   const s = document.createElement('small');
   s.textContent = 'Pacote ' + escolha.pacote.nome + ' · cenário ' + escolha.cenario + ' · ' + escolha.pacote.valor_txt + ' · sinal 30%: ' + escolha.pacote.sinal_txt;
   $('resumo').appendChild(b); $('resumo').appendChild(s);
+  if (escolha.pacote.desconto_semana) {
+    const d = document.createElement('small');
+    d.style.color = 'var(--moss-deep)'; d.style.fontWeight = '500';
+    d.textContent = '✓ 10% de desconto aplicado (sessão em dia de semana)';
+    $('resumo').appendChild(d);
+  }
   $('aviso-entrega').hidden = !precisaAvisoEntrega(escolha.data);
   $('erro-dados').textContent = '';
   passo(5);
