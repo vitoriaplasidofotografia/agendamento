@@ -87,22 +87,20 @@ input:focus,select:focus{border-color:var(--blue)}
 a.zap{color:var(--blue);text-decoration:none;font-size:13px}
 a.zap:hover{text-decoration:underline}
 .vazio{text-align:center;color:var(--soft);padding:30px 0;font-style:italic;font-size:16px}
-.financas{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px}
-.fin{background:var(--bg2);border:1px solid var(--line);border-radius:var(--raio);padding:12px 14px}
-.fin .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500}
-.fin .numero{font-family:var(--disp);font-size:19px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:4px}
+.financas{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:4px}
+.fin{background:var(--bg2);border:1px solid var(--line);border-radius:var(--raio);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+.fin .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500;line-height:1.4}
+.fin .numero{font-family:var(--disp);font-size:19px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.2}
 .fin.pago .numero{color:var(--green)}
 .fin.pendente .numero{color:var(--yellow)}
 .fin.saldo .numero{color:var(--blue)}
 .fin.fatura .numero{color:var(--blue)}
 .fin.fatura{border-color:var(--blue);background:var(--blue-soft)}
-@media (max-width:700px){.financas{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:420px){.financas{grid-template-columns:1fr}}
 .custos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
 .custos .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500}
 .custos .numero{font-family:var(--disp);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .bloco-titulo{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:0 0 10px;font-weight:600}
-.fin.editavel label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500;display:block;margin-bottom:6px}
+.fin.editavel label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500;display:block;line-height:1.4}
 .fin.editavel input{width:100%;border:1px solid var(--line-forte);background:#fff;border-radius:var(--raio-p);padding:8px 10px;font-family:var(--disp);font-size:16px;font-weight:600;color:var(--ink)}
 .fin.editavel input:focus{border-color:var(--blue)}
 .fin.custo .numero{color:var(--red)}
