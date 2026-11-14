@@ -726,6 +726,8 @@ function abrirModal(a, etapa) {
   html += linhaModal('Data e horário', new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) + ' · ' + a.inicio);
   html += linhaModal('Cenário', a.cenario || '—');
   html += linhaModal('Pessoas', (a.pessoas || '?') + ' pessoa(s)');
+  html += linhaModal('Nome dos adultos', a.nome_adultos || '—');
+  html += linhaModal('Nome das crianças', a.nome_criancas || '—');
   html += linhaModal('Etapa do Kanban', etapa + '. ' + ETAPAS[etapa - 1]);
   html += '<div class="modal-secao">Contato</div>';
   html += linhaModal('WhatsApp', '<a class="zap" target="_blank" rel="noopener" href="https://wa.me/' + numero + '">' + numero + '</a>');
