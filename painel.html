@@ -610,12 +610,13 @@ function desenhar() {
 
   const lista = $('lista');
   lista.innerHTML = '';
-  if (!dados.length) {
+  const listaVisivel = dados.filter((a) => a.status !== STATUS_CANC);
+  if (!listaVisivel.length) {
     lista.innerHTML = '<p class="vazio">Nenhum agendamento neste período.</p>';
     return;
   }
   let diaAtual = '';
-  dados.forEach((a) => {
+  listaVisivel.forEach((a) => {
     if (a.data !== diaAtual) {
       diaAtual = a.data;
       const h = document.createElement('div'); h.className = 'dia';
