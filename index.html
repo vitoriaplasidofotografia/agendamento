@@ -141,7 +141,7 @@ label.aceite input{margin-top:3px}
     </div>
     <div class="grid" id="calendario"></div>
     <p class="legend">Dias disponíveis aparecem em destaque. Cada sessão dura 1 hora.</p>
-    <div class="politica" style="margin-top:14px">
+    <div class="politica" id="aviso-desconto-semana" style="margin-top:14px" hidden>
       <b>Valores por lote</b>
       <p style="margin:8px 0 0">O valor do pacote segue o lote vigente hoje, na data da sua reserva: <b>1º lote</b> até 22/11, <b>2º lote</b> de 23/11 a 10/12, <b>3º lote</b> de 11/12 a 19/12. Sessões de segunda a sexta-feira têm <b>10% de desconto</b> nos pacotes Presente e Bênção (aplicado automaticamente ao escolher a data, válido a partir do 2º lote).</p>
     </div>
@@ -540,6 +540,7 @@ api({ acao: 'config' }).then((r) => {
     pacotes = r.pacotes || [];
     if (r.whatsapp) whatsappVitoria = r.whatsapp;
     desenharPacotes();
+    $('aviso-desconto-semana').hidden = r.lote === '1º lote';
   } else {
     $('lista-pacotes').innerHTML = '<p class="sub">Não consegui carregar os pacotes. Atualize a página.</p>';
   }
