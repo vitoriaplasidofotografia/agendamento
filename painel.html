@@ -404,6 +404,10 @@ function valorFotosExtras(q, lote) {
   return q * (q <= 4 ? FOTO_EXTRA_CHEIA_LOTE[i] : FOTO_EXTRA_PROMO_LOTE[i]);
 }
 function extrasValorDe(a) { return valorFotosExtras(a.fotos_extras || 0, a.lote); }
+/* fotos impressas extras: preço fixo, não varia por lote */
+const PRECO_FOTO_IMPRESSA = 5;
+function valorFotosImpressas(q) { return Math.max(0, q || 0) * PRECO_FOTO_IMPRESSA; }
+function impressasValorDe(a) { return valorFotosImpressas(a.fotos_impressas || 0); }
 /* prazos de entrega, em dias corridos após a sessão */
 const PRAZO_DIGITAL_DIAS = 6;
 const PRAZO_FISICO_DIAS = 10;
@@ -573,7 +577,7 @@ function desenhar() {
   const ativos = dados.filter((a) => a.status !== STATUS_CANC);
   const pago = ativos.filter((a) => a.status === STATUS_OK).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
   const pendente = ativos.filter((a) => a.status === STATUS_AGUARDA).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
-  const saldo = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a), 0);
+  const saldo = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a) + impressasValorDe(a), 0);
   $('fin-pago').textContent = formatarReais(pago);
   $('fin-pendente').textContent = formatarReais(pendente);
   $('fin-saldo').textContent = formatarReais(saldo);
@@ -584,7 +588,7 @@ function desenhar() {
 
   const faturaPorOrigem = { 'Indicação': 0, 'Orgânico': 0, 'Anúncio': 0, '': 0 };
   ativos.forEach((a) => {
-    const contrib = (a.status === STATUS_OK ? lerReais(a.sinal_txt) : 0) + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a);
+    const contrib = (a.status === STATUS_OK ? lerReais(a.sinal_txt) : 0) + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a) + impressasValorDe(a);
     const chave = ORIGENS.indexOf(a.origem) !== -1 ? a.origem : '';
     faturaPorOrigem[chave] += contrib;
   });
@@ -753,7 +757,8 @@ function abrirModal(a, etapa) {
   if (a.status !== STATUS_CANC) {
     html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
     html += linhaModal('Fotos extras', (a.fotos_extras || 0) + ' · ' + formatarReais(extrasValorDe(a)));
-    html += linhaModal('Resta receber', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt) + extrasValorDe(a)));
+    html += linhaModal('Fotos impressas extras', (a.fotos_impressas || 0) + ' · ' + formatarReais(impressasValorDe(a)));
+    html += linhaModal('Resta receber', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt) + extrasValorDe(a) + impressasValorDe(a)));
     html += linhaModal('Custo estimado', formatarReais(custoDe(a)));
   }
   if (a.status !== STATUS_CANC) {
@@ -986,8 +991,13 @@ function linhaFinanceira(a) {
       tagExtras.textContent = a.fotos_extras + ' foto(s) extra · ' + formatarReais(extrasValorDe(a)) + (a.extras_pago ? ' · pago' : ' · pendente');
       linha2.appendChild(tagExtras);
     }
+    if (a.fotos_impressas > 0) {
+      const tagImpressas = document.createElement('span'); tagImpressas.className = 'tag ' + (a.fotos_impressas_pago ? 'ok' : 'extras');
+      tagImpressas.textContent = a.fotos_impressas + ' foto(s) impressa(s) extra · ' + formatarReais(impressasValorDe(a)) + (a.fotos_impressas_pago ? ' · pago' : ' · pendente');
+      linha2.appendChild(tagImpressas);
+    }
     const resta = document.createElement('span'); resta.className = 'tag resta';
-    resta.textContent = 'resta ' + formatarReais((a.saldo_pago ? 0 : (lerReais(a.valor_txt) - lerReais(a.sinal_txt))) + (a.extras_pago ? 0 : extrasValorDe(a)));
+    resta.textContent = 'resta ' + formatarReais((a.saldo_pago ? 0 : (lerReais(a.valor_txt) - lerReais(a.sinal_txt))) + (a.extras_pago ? 0 : extrasValorDe(a)) + (a.fotos_impressas_pago ? 0 : impressasValorDe(a)));
     linha2.appendChild(resta);
     const custo = document.createElement('span'); custo.className = 'tag custo';
     custo.textContent = 'custo ' + formatarReais(custoDe(a));
@@ -1007,6 +1017,12 @@ function linhaFinanceira(a) {
       x.addEventListener('click', (e) => { e.stopPropagation(); mudarExtrasPago(a, !a.extras_pago, x); });
       acoes.appendChild(x);
     }
+    if (a.fotos_impressas > 0) {
+      const y = document.createElement('button'); y.className = a.fotos_impressas_pago ? 'btn ghost' : 'btn prim'; y.type = 'button';
+      y.textContent = a.fotos_impressas_pago ? 'Desfazer pago impressas' : 'Marcar pago impressas';
+      y.addEventListener('click', (e) => { e.stopPropagation(); mudarFotosImpressasPago(a, !a.fotos_impressas_pago, y); });
+      acoes.appendChild(y);
+    }
   }
 
   el.appendChild(hora); el.appendChild(info); el.appendChild(acoes);
@@ -1016,6 +1032,8 @@ function linhaFinanceira(a) {
 function abrirModalFinanceiro(a) {
   const extras = a.fotos_extras || 0;
   const extrasTotalValor = extrasValorDe(a);
+  const impressas = a.fotos_impressas || 0;
+  const impressasTotalValor = impressasValorDe(a);
   const restaBase = lerReais(a.valor_txt) - lerReais(a.sinal_txt);
   let html = '<button class="modal-fechar" id="modal-fechar" type="button">&times;</button>';
   html += '<h2>' + a.nome + '</h2>';
@@ -1036,26 +1054,46 @@ function abrirModalFinanceiro(a) {
       html += linhaModal('Adicionais', a.extras_pago ? 'pago' : 'pendente');
       html += '<button class="btn ' + (a.extras_pago ? 'ghost' : 'prim') + '" id="modal-extras-pago-botao" type="button" style="width:100%;margin-top:4px">' + (a.extras_pago ? 'Desfazer pago adicionais' : 'Marcar pago adicionais') + '</button>';
     }
-    html += linhaModal('Resta receber (pacote + adicionais)', '<span id="modal-extras-resta">' + formatarReais((a.saldo_pago ? 0 : restaBase) + (a.extras_pago ? 0 : extrasTotalValor)) + '</span>');
+    html += '<div class="modal-secao">Fotos impressas extras (R$ ' + PRECO_FOTO_IMPRESSA.toFixed(2).replace('.', ',') + ' cada)</div>';
+    html += '<div class="modal-linha"><span class="rot">Quantidade adquirida</span><span class="val"><input type="number" id="modal-impressas-qtd" min="0" step="1" value="' + impressas + '" style="width:80px;text-align:right;padding:4px 8px"></span></div>';
+    html += linhaModal('Total em fotos impressas', '<span id="modal-impressas-total">' + formatarReais(impressasTotalValor) + '</span>');
+    html += '<button class="btn prim" id="modal-impressas-salvar" type="button" style="width:100%;margin-top:10px">Salvar fotos impressas</button>';
+    if (impressas > 0) {
+      html += linhaModal('Impressas', a.fotos_impressas_pago ? 'pago' : 'pendente');
+      html += '<button class="btn ' + (a.fotos_impressas_pago ? 'ghost' : 'prim') + '" id="modal-impressas-pago-botao" type="button" style="width:100%;margin-top:4px">' + (a.fotos_impressas_pago ? 'Desfazer pago impressas' : 'Marcar pago impressas') + '</button>';
+    }
+    html += linhaModal('Resta receber (pacote + adicionais)', '<span id="modal-extras-resta">' + formatarReais((a.saldo_pago ? 0 : restaBase) + (a.extras_pago ? 0 : extrasTotalValor) + (a.fotos_impressas_pago ? 0 : impressasTotalValor)) + '</span>');
   }
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
   $('modal-fechar').addEventListener('click', fecharModal);
   if (a.status !== STATUS_CANC) {
     const input = $('modal-extras-qtd');
-    input.addEventListener('input', () => {
+    const inputImpressas = $('modal-impressas-qtd');
+    const recalcularResta = () => {
       const q = Math.max(0, parseInt(input.value, 10) || 0);
-      const tot = valorFotosExtras(q);
+      const qi = Math.max(0, parseInt(inputImpressas.value, 10) || 0);
+      const tot = valorFotosExtras(q, a.lote);
+      const totImpressas = valorFotosImpressas(qi);
       $('modal-extras-total').textContent = formatarReais(tot);
-      $('modal-extras-resta').textContent = formatarReais((a.saldo_pago ? 0 : restaBase) + (a.extras_pago ? 0 : tot));
-    });
+      $('modal-impressas-total').textContent = formatarReais(totImpressas);
+      $('modal-extras-resta').textContent = formatarReais((a.saldo_pago ? 0 : restaBase) + (a.extras_pago ? 0 : tot) + (a.fotos_impressas_pago ? 0 : totImpressas));
+    };
+    input.addEventListener('input', recalcularResta);
+    inputImpressas.addEventListener('input', recalcularResta);
     $('modal-extras-salvar').addEventListener('click', () => {
       const q = Math.max(0, parseInt(input.value, 10) || 0);
       salvarExtras(a, q);
     });
+    $('modal-impressas-salvar').addEventListener('click', () => {
+      const qi = Math.max(0, parseInt(inputImpressas.value, 10) || 0);
+      salvarFotosImpressas(a, qi);
+    });
     $('modal-saldo-botao').addEventListener('click', (e) => { mudarSaldo(a, !a.saldo_pago, e.target); });
     const botaoExtrasPago = $('modal-extras-pago-botao');
     if (botaoExtrasPago) botaoExtrasPago.addEventListener('click', (e) => { mudarExtrasPago(a, !a.extras_pago, e.target); });
+    const botaoImpressasPago = $('modal-impressas-pago-botao');
+    if (botaoImpressasPago) botaoImpressasPago.addEventListener('click', (e) => { mudarFotosImpressasPago(a, !a.fotos_impressas_pago, e.target); });
   }
 }
 
@@ -1090,6 +1128,33 @@ async function mudarExtrasPago(a, pago, botao) {
   botao.disabled = true;
   try {
     const r = await chamar({ acao: 'extras_pago', senha: senha, id: a.id, pago: pago });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; botao.disabled = false; return; }
+    fecharModal();
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    botao.disabled = false;
+  }
+}
+
+async function salvarFotosImpressas(a, qtd) {
+  const botao = $('modal-impressas-salvar');
+  if (botao) botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'fotos_impressas', senha: senha, id: a.id, qtd: qtd });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; if (botao) botao.disabled = false; return; }
+    fecharModal();
+    await carregar();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    if (botao) botao.disabled = false;
+  }
+}
+
+async function mudarFotosImpressasPago(a, pago, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'fotos_impressas_pago', senha: senha, id: a.id, pago: pago });
     if (!r.ok) { $('erro-painel').textContent = r.erro; botao.disabled = false; return; }
     fecharModal();
     await carregar();
@@ -1192,7 +1257,7 @@ async function carregarCapacidade() {
 
 function desenharMeta() {
   const ativos = dados.filter((a) => a.status !== STATUS_CANC);
-  const faturamentoAtual = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) + extrasValorDe(a)), 0);
+  const faturamentoAtual = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) + extrasValorDe(a) + impressasValorDe(a)), 0);
   const ticketMedio = ativos.length ? ativos.reduce((s, a) => s + lerReais(a.valor_txt), 0) / ativos.length : 0;
 
   $('meta-horarios').textContent = capacidadeLivre === null ? '…' : capacidadeLivre;
@@ -1261,7 +1326,7 @@ function desenharMeta() {
   $('meta-negociacao-falta').textContent = formatarReais(Math.max(0, meta - faturamentoComNegociacao));
 
   const retornoAnuncios = ativos.filter((a) => a.origem === 'Anúncio').reduce((s, a) => {
-    return s + (a.status === STATUS_OK ? lerReais(a.sinal_txt) : 0) + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a);
+    return s + (a.status === STATUS_OK ? lerReais(a.sinal_txt) : 0) + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a) + impressasValorDe(a);
   }, 0);
   const investimentoAnuncios = lerNum(CHAVE_ANUNCIOS_INVESTIMENTO, 0);
   const negociandoAnuncio = negociacoes.filter((n) => n.status === 'negociando' && n.origem === 'Anúncio').reduce((s, n) => s + (n.valor || 0), 0);
