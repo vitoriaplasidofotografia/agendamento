@@ -389,7 +389,11 @@ function formatarReais(v) {
 }
 /* custo estimado de produção de cada pacote (fotos impressas, Polaroid, bolinha de Natal) */
 const CUSTO_PACOTE = { 'Laço': 0, 'Presente': 22.50, 'Bênção': 43.15 };
-function custoDe(a) { return CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0; }
+const CUSTO_FOTO_IMPRESSA = 2.95;
+function custoDe(a) {
+  const base = CUSTO_PACOTE.hasOwnProperty(a.pacote) ? CUSTO_PACOTE[a.pacote] : 0;
+  return base + (a.fotos_impressas || 0) * CUSTO_FOTO_IMPRESSA;
+}
 /* valor de cada fotografia extra, cobrada além do pacote (mesmo valor informado na galeria Alboom) */
 /* até 4 fotos extras: preço cheio do lote · a partir de 5 fotos extras: preço promocional do lote (todas no valor menor) */
 /* varia por lote (1º/2º/3º), conforme o lote em que a cliente fez a reserva */
