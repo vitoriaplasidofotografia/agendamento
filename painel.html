@@ -229,6 +229,12 @@ a.zap:hover{text-decoration:underline}
           <div class="fin saldo"><div class="rotulo">Resta receber (no dia da sessão)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
           <div class="fin fatura"><div class="rotulo">Faturamento (recebido + a receber)</div><div class="numero" id="fin-fatura">R$ 0,00</div></div>
         </div>
+        <div class="financas" id="financas-extras" style="margin-top:10px">
+          <div class="fin"><div class="rotulo">Fotos extras · recebido</div><div class="numero" id="fin-extras-recebido">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Fotos extras · a receber</div><div class="numero" id="fin-extras-receber">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Fotos impressas · recebido</div><div class="numero" id="fin-impressas-recebido">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Fotos impressas · a receber</div><div class="numero" id="fin-impressas-receber">R$ 0,00</div></div>
+        </div>
         <div class="custos" id="custos">
           <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
           <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
@@ -586,6 +592,14 @@ function desenhar() {
   $('fin-pendente').textContent = formatarReais(pendente);
   $('fin-saldo').textContent = formatarReais(saldo);
   $('fin-fatura').textContent = formatarReais(pago + saldo);
+  const extrasRecebido = ativos.reduce((s, a) => s + (a.extras_pago ? extrasValorDe(a) : 0), 0);
+  const extrasAReceber = ativos.reduce((s, a) => s + (a.extras_pago ? 0 : extrasValorDe(a)), 0);
+  const impressasRecebido = ativos.reduce((s, a) => s + (a.fotos_impressas_pago ? impressasValorDe(a) : 0), 0);
+  const impressasAReceber = ativos.reduce((s, a) => s + (a.fotos_impressas_pago ? 0 : impressasValorDe(a)), 0);
+  $('fin-extras-recebido').textContent = formatarReais(extrasRecebido);
+  $('fin-extras-receber').textContent = formatarReais(extrasAReceber);
+  $('fin-impressas-recebido').textContent = formatarReais(impressasRecebido);
+  $('fin-impressas-receber').textContent = formatarReais(impressasAReceber);
   const custo = ativos.reduce((s, a) => s + custoDe(a), 0);
   $('fin-custo').textContent = formatarReais(custo);
   $('fin-lucro').textContent = formatarReais(pago + saldo - custo);
