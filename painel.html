@@ -759,7 +759,7 @@ function abrirModal(a, etapa) {
   html += '</div>';
   html += '<p id="modal-sinal-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   if (a.status !== STATUS_CANC) {
-    html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
+    html += linhaModal('Restante (70%)', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + ' · ' + (a.saldo_pago ? 'pago' : 'pendente'));
     html += linhaModal('Fotos extras', (a.fotos_extras || 0) + ' · ' + formatarReais(extrasValorDe(a)));
     html += linhaModal('Fotos impressas extras', (a.fotos_impressas || 0) + ' · ' + formatarReais(impressasValorDe(a)));
     html += linhaModal('Resta receber', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt) + extrasValorDe(a) + impressasValorDe(a)));
@@ -1047,7 +1047,7 @@ function abrirModalFinanceiro(a) {
   html += linhaModal('Valor total', a.valor_txt);
   html += linhaModal('Sinal (30%)', a.sinal_txt + ' · ' + (a.status === STATUS_OK ? 'pago' : a.status === STATUS_CANC ? 'cancelado' : 'pendente'));
   if (a.status !== STATUS_CANC) {
-    html += linhaModal('70% restante', a.saldo_pago ? 'pago' : 'pendente');
+    html += linhaModal('Restante (70%)', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + ' · ' + (a.saldo_pago ? 'pago' : 'pendente'));
     html += '<button class="btn ' + (a.saldo_pago ? 'ghost' : 'prim') + '" id="modal-saldo-botao" type="button" style="width:100%;margin-top:4px">' + (a.saldo_pago ? 'Desfazer pago pacote' : 'Marcar pago pacote') + '</button>';
     const idxLote = Math.min(Math.max(a.lote || 0, 0), FOTO_EXTRA_CHEIA_LOTE.length - 1);
     html += '<div class="modal-secao">Fotos extras (' + LOTE_NOMES[idxLote] + ' · até 4: R$ ' + FOTO_EXTRA_CHEIA_LOTE[idxLote].toFixed(2).replace('.', ',') + ' cada · 5 ou mais: R$ ' + FOTO_EXTRA_PROMO_LOTE[idxLote].toFixed(2).replace('.', ',') + ' cada)</div>';
