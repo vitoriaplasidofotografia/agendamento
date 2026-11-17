@@ -172,10 +172,8 @@ label.aceite input{margin-top:3px}
       <input type="tel" id="whatsapp" placeholder="(51) 99999-9999" autocomplete="tel" required>
       <label for="email">E-mail para receber as fotos</label>
       <input type="email" id="email" placeholder="seuemail@exemplo.com" autocomplete="email" required>
-      <label for="nome-adultos">Nome dos adultos</label>
-      <input type="text" id="nome-adultos" placeholder="Ex.: Maria e João" required>
-      <label for="nome-criancas">Nome das crianças (se houver)</label>
-      <input type="text" id="nome-criancas" placeholder="Ex.: Sofia e Miguel">
+      <label for="nome-criancas">Nome e idade das crianças (se houver)</label>
+      <input type="text" id="nome-criancas" placeholder="Ex.: Sofia (5 anos) e Miguel (3 anos)">
       <label for="pessoas">Quantas pessoas serão fotografadas?</label>
       <select id="pessoas" required>
         <option value="">Selecione</option>
@@ -443,7 +441,6 @@ $('form').addEventListener('submit', async (ev) => {
       nome: $('nome').value,
       whatsapp: $('whatsapp').value,
       email: $('email').value,
-      nome_adultos: $('nome-adultos').value,
       nome_criancas: $('nome-criancas').value,
       pessoas: $('pessoas').value,
       data: escolha.data,
