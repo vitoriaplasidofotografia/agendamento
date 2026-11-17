@@ -157,6 +157,7 @@ a.zap:hover{text-decoration:underline}
 .edicao-sinal input{width:100px;border:1px solid var(--line-forte);border-radius:8px;padding:4px 8px;font-size:13px;text-align:right}
 .edicao-sinal button{appearance:none;border:0;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;background:var(--blue);color:#fff}
 .edicao-sinal button.cancelar{background:var(--panel);color:var(--soft);border:1px solid var(--line-forte)}
+.edicao-sinal.edicao-link input{width:auto;flex:1;text-align:left}
 [hidden]{display:none!important}
 @media (max-width:480px){.item{grid-template-columns:58px 1fr}.acoes{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
 </style>
@@ -759,6 +760,13 @@ function abrirModal(a, etapa) {
     html += '<div class="modal-secao">Prazos de entrega</div>';
     html += linhaModal('Arquivos digitais até', dataLimite(a.data, PRAZO_DIGITAL_DIAS));
     html += linhaModal('Fotos impressas até', dataLimite(baseFisico(a), PRAZO_FISICO_DIAS));
+    html += '<div class="modal-linha"><span class="rot">Álbum (Google Fotos)</span><span class="val">' + (a.link_album ? '<a class="zap" target="_blank" rel="noopener" href="' + a.link_album + '">Abrir álbum</a>' : 'Não cadastrado') + '<button class="btn-lapis" id="modal-album-editar" type="button" title="Editar link do álbum de entrega">✏️</button></span></div>';
+    html += '<div class="edicao-sinal edicao-link" id="modal-album-edicao" hidden style="margin:2px 0 8px">';
+    html += '<input type="text" id="modal-album-input" placeholder="https://photos.app.goo.gl/..." value="' + (a.link_album || '').replace(/"/g, '&quot;') + '">';
+    html += '<button type="button" id="modal-album-salvar">Salvar</button>';
+    html += '<button type="button" class="cancelar" id="modal-album-cancelar">Cancelar</button>';
+    html += '</div>';
+    html += '<p id="modal-album-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   }
   if (a.status !== STATUS_CANC) {
     html += '<div class="modal-secao">Reagendar</div>';
@@ -807,6 +815,31 @@ function abrirModal(a, etapa) {
       msgOrigem.textContent = 'Não consegui salvar. Tente de novo.';
     }
   });
+  if (a.status !== STATUS_CANC) {
+    $('modal-album-editar').addEventListener('click', () => {
+      $('modal-album-edicao').hidden = false;
+      $('modal-album-input').focus();
+    });
+    $('modal-album-cancelar').addEventListener('click', () => { $('modal-album-edicao').hidden = true; });
+    $('modal-album-salvar').addEventListener('click', async () => {
+      const link = $('modal-album-input').value.trim();
+      const msgAlbum = $('modal-album-msg');
+      const botaoAlbum = $('modal-album-salvar');
+      botaoAlbum.disabled = true; botaoAlbum.textContent = 'Salvando…';
+      msgAlbum.textContent = '';
+      try {
+        const r = await chamar({ acao: 'link_album', senha: senha, id: a.id, link: link });
+        if (!r.ok) { msgAlbum.textContent = r.erro; return; }
+        a.link_album = r.link_album;
+        abrirModal(a, etapa);
+        carregar();
+      } catch (err) {
+        msgAlbum.textContent = 'Não consegui salvar. Tente de novo.';
+      } finally {
+        botaoAlbum.disabled = false; botaoAlbum.textContent = 'Salvar';
+      }
+    });
+  }
   if (a.status !== STATUS_CANC) prepararReagendar(a);
 }
 
