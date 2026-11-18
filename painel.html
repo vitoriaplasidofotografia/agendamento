@@ -247,9 +247,9 @@ a.zap:hover{text-decoration:underline}
     <div id="view-financeiro" hidden>
       <div class="card">
         <div class="financas" id="financas">
-          <div class="fin pago"><div class="rotulo">Recebido (sinal confirmado)</div><div class="numero" id="fin-pago">R$ 0,00</div></div>
+          <div class="fin pago"><div class="rotulo">Recebido (sinal + restante pagos)</div><div class="numero" id="fin-pago">R$ 0,00</div></div>
           <div class="fin pendente"><div class="rotulo">Sinal aguardando confirmação</div><div class="numero" id="fin-pendente">R$ 0,00</div></div>
-          <div class="fin saldo"><div class="rotulo">Resta receber (no dia da sessão)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
+          <div class="fin saldo"><div class="rotulo">Resta receber (restante + extras + impressas não pagos)</div><div class="numero" id="fin-saldo">R$ 0,00</div></div>
           <div class="fin fatura"><div class="rotulo">Faturamento (recebido + a receber)</div><div class="numero" id="fin-fatura">R$ 0,00</div></div>
         </div>
         <div class="financas" id="financas-extras" style="margin-top:10px">
@@ -630,17 +630,20 @@ function ehNovo(a) {
 
 function desenhar() {
   const ativos = dados.filter((a) => a.status !== STATUS_CANC);
-  const pago = ativos.filter((a) => a.status === STATUS_OK).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
+  const sinalConfirmado = ativos.filter((a) => a.status === STATUS_OK).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
   const pendente = ativos.filter((a) => a.status === STATUS_AGUARDA).reduce((s, a) => s + lerReais(a.sinal_txt), 0);
-  const saldo = ativos.reduce((s, a) => s + (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + extrasValorDe(a) + impressasValorDe(a), 0);
-  $('fin-pago').textContent = formatarReais(pago);
-  $('fin-pendente').textContent = formatarReais(pendente);
-  $('fin-saldo').textContent = formatarReais(saldo);
-  $('fin-fatura').textContent = formatarReais(pago + saldo);
+  const restantePago = ativos.reduce((s, a) => s + (a.saldo_pago ? (lerReais(a.valor_txt) - lerReais(a.sinal_txt)) : 0), 0);
+  const restanteAReceber = ativos.reduce((s, a) => s + (a.saldo_pago ? 0 : (lerReais(a.valor_txt) - lerReais(a.sinal_txt))), 0);
   const extrasRecebido = ativos.reduce((s, a) => s + (a.extras_pago ? extrasValorDe(a) : 0), 0);
   const extrasAReceber = ativos.reduce((s, a) => s + (a.extras_pago ? 0 : extrasValorDe(a)), 0);
   const impressasRecebido = ativos.reduce((s, a) => s + (a.fotos_impressas_pago ? impressasValorDe(a) : 0), 0);
   const impressasAReceber = ativos.reduce((s, a) => s + (a.fotos_impressas_pago ? 0 : impressasValorDe(a)), 0);
+  const pago = sinalConfirmado + restantePago;
+  const saldo = restanteAReceber + extrasAReceber + impressasAReceber;
+  $('fin-pago').textContent = formatarReais(pago);
+  $('fin-pendente').textContent = formatarReais(pendente);
+  $('fin-saldo').textContent = formatarReais(saldo);
+  $('fin-fatura').textContent = formatarReais(pago + saldo);
   $('fin-extras-recebido').textContent = formatarReais(extrasRecebido);
   $('fin-extras-receber').textContent = formatarReais(extrasAReceber);
   $('fin-impressas-recebido').textContent = formatarReais(impressasRecebido);
