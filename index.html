@@ -68,6 +68,8 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
 .btn:hover{background:var(--moss-deep)}
 .btn.ghost{background:transparent;color:var(--moss);border:1px solid var(--moss)}
 .btn:disabled{opacity:.6;cursor:default}
+.banner-lote{background:var(--moss-deep);color:#fff;text-align:center;padding:11px 18px;font-size:13.5px;line-height:1.45}
+.banner-lote b{color:var(--gold-soft)}
 .erro{color:var(--danger);font-size:14px;margin-top:10px;min-height:1em}
 .resumo{font-family:var(--serif);font-size:20px;margin:0}
 .resumo b{font-weight:600}
@@ -92,6 +94,9 @@ label.aceite input{margin-top:3px}
 </style>
 </head>
 <body>
+<div class="banner-lote" id="banner-lote" hidden>
+  <p id="banner-lote-texto" style="margin:0"></p>
+</div>
 <div class="wrap">
   <header>
     <img src="img/logo-crop.png" alt="Vitória Plasido Fotografia">
@@ -248,6 +253,27 @@ const INCLUI_PACOTE = {
 };
 
 const $ = (id) => document.getElementById(id);
+
+/* banner de urgência do fim do 1º lote (22/11) */
+(function () {
+  const fimLote1 = new Date(2026, 10, 22, 23, 59, 59);
+  const fimLote2 = new Date(2026, 11, 10, 23, 59, 59);
+  const umDia = 24 * 60 * 60 * 1000;
+  const banner = document.getElementById('banner-lote');
+  const texto = document.getElementById('banner-lote-texto');
+  if (hoje <= fimLote1) {
+    const dias = Math.max(0, Math.ceil((fimLote1 - hoje) / umDia));
+    const faltam = dias === 0 ? 'Hoje é o último dia' : dias === 1 ? 'Falta só 1 dia' : 'Faltam ' + dias + ' dias';
+    texto.innerHTML = '🎄 <b>' + faltam + ' no valor do 1º lote!</b> A partir de 23/11 os pacotes passam pro valor do 2º lote. Garanta sua sessão de Natal com o preço atual.';
+    banner.hidden = false;
+  } else if (hoje <= fimLote2) {
+    const dias = Math.max(0, Math.ceil((fimLote2 - hoje) / umDia));
+    const faltam = dias === 0 ? 'Hoje é o último dia' : dias === 1 ? 'Falta só 1 dia' : 'Faltam ' + dias + ' dias';
+    texto.innerHTML = '🎄 <b>' + faltam + ' no valor do 2º lote!</b> A partir de 11/12 os pacotes passam pro valor do 3º e último lote. Garanta sua sessão de Natal com o preço atual.';
+    banner.hidden = false;
+  }
+})();
+
 const pad = (n) => (n < 10 ? '0' : '') + n;
 const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const mesIso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1);
