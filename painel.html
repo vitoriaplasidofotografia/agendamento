@@ -152,6 +152,28 @@ a.zap:hover{text-decoration:underline}
 .modal-linha .val{color:var(--ink);font-weight:500;text-align:right}
 .modal-secao{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:16px 0 2px}
 .modal-secao:first-of-type{margin-top:12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head b{font-family:var(--disp);font-size:18px;text-transform:capitalize}
+.cal-nav{appearance:none;border:1px solid var(--line-soft);background:#fff;color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.cal-legenda{display:flex;gap:14px;justify-content:center;font-size:11.5px;color:var(--soft);margin-bottom:12px;flex-wrap:wrap}
+.cal-legenda .pt{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.cal-legenda .pt.livre{background:var(--green)}
+.cal-legenda .pt.cheio{background:var(--red)}
+.cal-legenda .pt.fechado{background:#c7cdd6}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.cal-wd{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);padding:4px 0}
+.cal-dia{appearance:none;border:1px solid var(--line-soft);background:#fff;border-radius:10px;aspect-ratio:1;font-size:13.5px;color:var(--ink);cursor:pointer;padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cal-dia.empty{visibility:hidden;border:0;cursor:default}
+.cal-dia.fechado{background:#f2f4f7;color:#aab1bd;border-color:#eceff3}
+.cal-dia.livre{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+.cal-dia.cheio{background:var(--red-soft);border-color:var(--red)}
+.cal-dia .qtd{font-size:10px;color:var(--soft)}
+.dia-slot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.dia-slot:last-child{border-bottom:0}
+.dia-slot .hora{font-weight:600;color:var(--ink);flex:0 0 auto}
+.dia-slot .quem{flex:1;text-align:right;color:var(--soft)}
+.dia-slot.ocupado{cursor:pointer}
+.dia-slot.ocupado .quem{color:var(--ink)}
 .btn-lapis{appearance:none;border:0;background:none;cursor:pointer;font-size:13px;padding:0 0 0 6px;line-height:1;vertical-align:middle}
 .edicao-sinal{display:flex;gap:6px;align-items:center;justify-content:flex-end}
 .edicao-sinal input{width:100px;border:1px solid var(--line-forte);border-radius:8px;padding:4px 8px;font-size:13px;text-align:right}
@@ -188,6 +210,7 @@ a.zap:hover{text-decoration:underline}
       <button class="aba" id="aba-kanban" type="button">Kanban</button>
       <button class="aba" id="aba-negociacao" type="button">Em pré-agendamento</button>
       <button class="aba" id="aba-anuncios" type="button">Anúncios</button>
+      <button class="aba" id="aba-calendario" type="button">Calendário</button>
     </div>
 
     <div class="card" id="card-filtros">
@@ -337,6 +360,23 @@ a.zap:hover{text-decoration:underline}
           <div class="fin"><div class="rotulo">Custo por venda possível (c/ pré-agendamentos)</div><div class="numero" id="meta-anuncios-custo-venda-possivel">—</div></div>
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">Mensagens recebidas você digita (vem do Gerenciador de Anúncios). O custo por mensagem e por venda usam o valor investido em anúncios, informado no bloco acima.</p>
+      </div>
+    </div>
+
+    <div id="view-calendario" hidden>
+      <div class="card">
+        <div class="cal-head">
+          <button class="cal-nav" id="cal-mes-ant" type="button" aria-label="Mês anterior">‹</button>
+          <b id="cal-mes-nome"></b>
+          <button class="cal-nav" id="cal-mes-prox" type="button" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="cal-legenda">
+          <span><i class="pt livre"></i>Com vagas</span>
+          <span><i class="pt cheio"></i>Lotado</span>
+          <span><i class="pt fechado"></i>Sem expediente / sem vaga</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"><p class="atualiza" style="grid-column:1/-1;text-align:center">Carregando…</p></div>
+        <p class="atualiza" style="text-align:left;margin-top:10px">Toque num dia pra ver os horários e quem está agendado em cada um.</p>
       </div>
     </div>
 
@@ -1250,13 +1290,14 @@ $('periodo').addEventListener('change', () => {
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 function trocarAba(ativa) {
-  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios' };
-  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios' };
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario' };
   Object.keys(abas).forEach((k) => {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
   });
-  $('card-filtros').hidden = ativa === 'negociacao';
+  $('card-filtros').hidden = ativa === 'negociacao' || ativa === 'calendario';
+  if (ativa === 'calendario' && !calCarregouAlgumaVez) { calCarregouAlgumaVez = true; carregarCalendario(); }
 }
 $('aba-lista').addEventListener('click', () => trocarAba('lista'));
 $('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
@@ -1264,6 +1305,7 @@ $('aba-meta').addEventListener('click', () => trocarAba('meta'));
 $('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
 $('aba-negociacao').addEventListener('click', () => trocarAba('negociacao'));
 $('aba-anuncios').addEventListener('click', () => trocarAba('anuncios'));
+$('aba-calendario').addEventListener('click', () => trocarAba('calendario'));
 
 /* ---------- aba Meta ---------- */
 function lerNum(chave, padrao) { try { const v = localStorage.getItem(chave); return v === null ? padrao : Number(v); } catch (e) { return padrao; } }
@@ -1571,6 +1613,112 @@ $('neg-taxa-conversao').addEventListener('input', () => {
   guardarNum(CHAVE_NEG_TAXA, $('neg-taxa-conversao').value || 0);
   desenharNegociacao();
   desenharMeta();
+});
+
+/* ---------- aba Calendário ---------- */
+let calCarregouAlgumaVez = false;
+let calMesAtual = new Date(hojeCalendario().getFullYear(), hojeCalendario().getMonth(), 1);
+let calDiasComVagas = [];
+let calAgendamentosDoMes = [];
+
+function hojeCalendario() { return new Date(); }
+
+async function carregarCalendario() {
+  const grid = $('cal-grid');
+  grid.innerHTML = '<p class="atualiza" style="grid-column:1/-1;text-align:center">Carregando…</p>';
+  const mesIso = calMesAtual.getFullYear() + '-' + pad(calMesAtual.getMonth() + 1);
+  const primeiroDia = iso(new Date(calMesAtual.getFullYear(), calMesAtual.getMonth(), 1));
+  const ultimoDia = iso(new Date(calMesAtual.getFullYear(), calMesAtual.getMonth() + 1, 0));
+  try {
+    const [rDias, rLista] = await Promise.all([
+      fetch(API_URL + '?acao=dias&mes=' + mesIso).then((r) => r.json()),
+      chamar({ acao: 'listar', senha: senha, de: primeiroDia, ate: ultimoDia }),
+    ]);
+    calDiasComVagas = rDias.ok ? rDias.dias : [];
+    calAgendamentosDoMes = rLista.ok ? rLista.agendamentos : [];
+  } catch (e) {
+    calDiasComVagas = [];
+    calAgendamentosDoMes = [];
+  }
+  desenharCalendario();
+}
+
+function desenharCalendario() {
+  $('cal-mes-nome').textContent = calMesAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const grid = $('cal-grid');
+  grid.innerHTML = '';
+  ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach((l) => {
+    const w = document.createElement('div'); w.className = 'cal-wd'; w.textContent = l; grid.appendChild(w);
+  });
+  const primeiro = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth(), 1).getDay();
+  for (let i = 0; i < primeiro; i++) {
+    const v = document.createElement('div'); v.className = 'cal-dia empty'; grid.appendChild(v);
+  }
+  const total = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth() + 1, 0).getDate();
+  for (let d = 1; d <= total; d++) {
+    const dataIso = iso(new Date(calMesAtual.getFullYear(), calMesAtual.getMonth(), d));
+    const temVaga = calDiasComVagas.indexOf(dataIso) !== -1;
+    const qtd = calAgendamentosDoMes.filter((a) => a.data === dataIso && a.status !== STATUS_CANC).length;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cal-dia ' + (temVaga ? 'livre' : qtd > 0 ? 'cheio' : 'fechado');
+    const num = document.createElement('span'); num.textContent = d; b.appendChild(num);
+    if (qtd > 0) {
+      const q = document.createElement('span'); q.className = 'qtd'; q.textContent = qtd + ' agend.'; b.appendChild(q);
+    }
+    b.addEventListener('click', () => abrirDiaCalendario(dataIso));
+    grid.appendChild(b);
+  }
+}
+
+async function abrirDiaCalendario(dataIso) {
+  const titulo = new Date(dataIso + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  let html = '<button class="modal-fechar" id="modal-fechar" type="button">&times;</button>';
+  html += '<h2>' + titulo + '</h2>';
+  html += '<div id="cal-dia-conteudo"><p class="atualiza" style="text-align:center">Buscando horários…</p></div>';
+  $('modal-caixa').innerHTML = html;
+  $('modal-fundo').hidden = false;
+  $('modal-fechar').addEventListener('click', fecharModal);
+
+  let livres = [], ocupados = [];
+  try {
+    const r = await fetch(API_URL + '?acao=horarios&data=' + dataIso).then((x) => x.json());
+    livres = r.ok ? r.horarios : [];
+    ocupados = r.ok ? r.ocupados : [];
+  } catch (e) {}
+
+  const agendadosNoDia = calAgendamentosDoMes.filter((a) => a.data === dataIso && a.status !== STATUS_CANC);
+  const horarios = Array.from(new Set(livres.concat(ocupados))).sort();
+  const conteudo = $('cal-dia-conteudo');
+  if (!horarios.length) {
+    conteudo.innerHTML = '<p class="atualiza" style="text-align:center">Sem expediente ou sem horários cadastrados nesse dia.</p>';
+    return;
+  }
+  conteudo.innerHTML = '';
+  horarios.forEach((h) => {
+    const ag = agendadosNoDia.find((a) => a.inicio === h);
+    const row = document.createElement('div');
+    row.className = 'dia-slot' + (ag ? ' ocupado' : '');
+    const hora = document.createElement('span'); hora.className = 'hora'; hora.textContent = h;
+    const quem = document.createElement('span'); quem.className = 'quem';
+    if (ag) {
+      quem.textContent = ag.nome + ' · ' + ag.pacote;
+      row.addEventListener('click', () => { fecharModal(); abrirModal(ag, ag.etapa || 1); });
+    } else {
+      quem.textContent = 'Livre';
+    }
+    row.appendChild(hora); row.appendChild(quem);
+    conteudo.appendChild(row);
+  });
+}
+
+$('cal-mes-ant').addEventListener('click', () => {
+  calMesAtual = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth() - 1, 1);
+  carregarCalendario();
+});
+$('cal-mes-prox').addEventListener('click', () => {
+  calMesAtual = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth() + 1, 1);
+  carregarCalendario();
 });
 
 /* já logada nesta aba? entra direto */
