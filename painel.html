@@ -237,8 +237,11 @@ a.zap:hover{text-decoration:underline}
         </div>
         <div class="custos" id="custos">
           <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
+          <div class="fin custo"><div class="rotulo">Investido em anúncios</div><div class="numero" id="fin-custo-anuncios">R$ 0,00</div></div>
+          <div class="fin custo"><div class="rotulo">Custo total (produtos + anúncios)</div><div class="numero" id="fin-custo-total">R$ 0,00</div></div>
           <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
         </div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">O valor investido em anúncios é o mesmo informado na aba "Anúncios".</p>
       </div>
       <div class="card">
         <div class="bloco-titulo">Faturamento por origem do lead</div>
@@ -602,8 +605,12 @@ function desenhar() {
   $('fin-impressas-recebido').textContent = formatarReais(impressasRecebido);
   $('fin-impressas-receber').textContent = formatarReais(impressasAReceber);
   const custo = ativos.reduce((s, a) => s + custoDe(a), 0);
+  const investimentoAnuncios = lerNum(CHAVE_ANUNCIOS_INVESTIMENTO, 0);
+  const custoTotal = custo + investimentoAnuncios;
   $('fin-custo').textContent = formatarReais(custo);
-  $('fin-lucro').textContent = formatarReais(pago + saldo - custo);
+  $('fin-custo-anuncios').textContent = formatarReais(investimentoAnuncios);
+  $('fin-custo-total').textContent = formatarReais(custoTotal);
+  $('fin-lucro').textContent = formatarReais(pago + saldo - custoTotal);
 
   const faturaPorOrigem = { 'Indicação': 0, 'Orgânico': 0, 'Anúncio': 0, '': 0 };
   ativos.forEach((a) => {
