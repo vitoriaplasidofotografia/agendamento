@@ -53,6 +53,11 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
 .passo{display:flex;gap:12px;align-items:flex-start;margin:14px 0}
 .passo .num{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--moss);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:600;font-size:15px}
 .passo p{margin:0;font-size:14.5px;color:var(--ink)}
+.pils{display:flex;gap:8px;margin-top:12px}
+.pil{flex:1;appearance:none;border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:999px;padding:10px 6px;font-size:13px;letter-spacing:.02em;cursor:pointer;text-align:center}
+.pil.on{background:var(--moss);border-color:var(--moss);color:#fff}
+.passos-dispositivo{display:none;margin-top:4px}
+.passos-dispositivo.on{display:block}
 .insta{background:#fff;border:1px dashed var(--gold-soft);border-radius:12px;padding:16px;margin-top:10px;text-align:center}
 .insta .handle{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--gold);display:block;margin:6px 0}
 .versiculo{text-align:center;padding:18px 10px;margin-top:16px}
@@ -102,9 +107,25 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
     <div class="politica">
       <b>Como baixar em alta qualidade</b>
       <div class="passo"><span class="num">1</span><p>Toque no botão abaixo pra abrir o álbum no Google Fotos.</p></div>
-      <div class="passo"><span class="num">2</span><p><b>Se você tem um iPhone:</b> toque nos três pontinhos no canto superior direito, depois em "Selecionar fotos" e selecione todas. Em seguida toque no botão de compartilhar (também no canto superior) e, lá embaixo, em "Salvar imagens" — assim todas vão direto pra galeria do seu iPhone.</p></div>
-      <div class="passo"><span class="num">3</span><p><b>Se você tem Android:</b> toque nos três pontinhos no canto superior direito e toque em "Salvar fotos".</p></div>
-      <div class="passo"><span class="num">4</span><p><b>Pelo computador:</b> selecione as fotos (ou todas) e clique no ícone de baixar (↓).</p></div>
+
+      <div class="pils">
+        <button type="button" class="pil on" id="pil-iphone">📱 iPhone</button>
+        <button type="button" class="pil" id="pil-android">🤖 Android</button>
+        <button type="button" class="pil" id="pil-computador">💻 Computador</button>
+      </div>
+
+      <div class="passos-dispositivo on" id="dispositivo-iphone">
+        <div class="passo"><span class="num">2</span><p>Toque nos três pontinhos no canto superior direito, depois em "Selecionar fotos" e selecione todas.</p></div>
+        <div class="passo"><span class="num">3</span><p>Em seguida toque no botão de compartilhar (também no canto superior) e, lá embaixo, em "Salvar imagens" — assim todas vão direto pra galeria do seu iPhone.</p></div>
+      </div>
+
+      <div class="passos-dispositivo" id="dispositivo-android">
+        <div class="passo"><span class="num">2</span><p>Toque nos três pontinhos no canto superior direito e toque em "Salvar fotos".</p></div>
+      </div>
+
+      <div class="passos-dispositivo" id="dispositivo-computador">
+        <div class="passo"><span class="num">2</span><p>Selecione as fotos (ou todas) e clique no ícone de baixar (↓).</p></div>
+      </div>
     </div>
 
     <div class="insta">
@@ -130,6 +151,22 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
 
 <script>
 const $ = (id) => document.getElementById(id);
+
+const PILS_DISPOSITIVO = ['iphone', 'android', 'computador'];
+PILS_DISPOSITIVO.forEach((d) => {
+  $('pil-' + d).addEventListener('click', () => {
+    PILS_DISPOSITIVO.forEach((o) => {
+      $('pil-' + o).classList.toggle('on', o === d);
+      $('dispositivo-' + o).classList.toggle('on', o === d);
+    });
+  });
+});
+/* abre direto na aba do dispositivo detectado */
+(function () {
+  const ua = navigator.userAgent || '';
+  const inicial = /iPhone|iPad|iPod/i.test(ua) ? 'iphone' : /Android/i.test(ua) ? 'android' : /Mobi/i.test(ua) ? 'android' : 'computador';
+  if (inicial !== 'iphone') $('pil-' + inicial).click();
+})();
 const API = 'https://script.google.com/macros/s/AKfycbwyPsHThAdTGlgQibJ7ZD1woOcF_W6LcFe-4L0pd5DFfmHUqrS4XFiZm8Oqcaq9YB7n/exec';
 
 async function apiPost(body) {
