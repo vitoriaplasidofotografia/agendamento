@@ -1702,7 +1702,7 @@ async function abrirDiaCalendario(dataIso) {
     const hora = document.createElement('span'); hora.className = 'hora'; hora.textContent = h;
     const quem = document.createElement('span'); quem.className = 'quem';
     if (ag) {
-      quem.textContent = ag.nome + ' · ' + ag.pacote;
+      quem.textContent = ag.nome + ' · ' + ag.pacote + (ag.cenario ? ' · ' + ag.cenario : '');
       row.addEventListener('click', () => { fecharModal(); abrirModal(ag, ag.etapa || 1); });
     } else {
       quem.textContent = 'Livre';
