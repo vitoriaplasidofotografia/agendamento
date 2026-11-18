@@ -37,8 +37,16 @@ h2{font-family:var(--serif);font-weight:600;font-size:26px;margin:4px 0 8px}
 label{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px}
 input[type=text],input[type=email],input[type=password]{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:13px 14px;color:var(--ink)}
 input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
-.btn{display:block;width:100%;text-align:center;border:0;background:var(--moss);color:#fff;border-radius:999px;padding:15px 18px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:18px;text-decoration:none}
+.btn{display:block;width:100%;text-align:center;border:0;background:var(--moss);color:#fff;border-radius:999px;padding:15px 18px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:18px;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
 .btn:hover{background:var(--moss-deep)}
+.btn-album{background:#25D366;box-shadow:0 0 0 0 rgba(37,211,102,.55);animation:pulso-album 2.2s ease-in-out infinite}
+.btn-album:hover{background:#1fb959;transform:translateY(-2px);box-shadow:0 10px 22px rgba(37,211,102,.4)}
+.btn-album:active{transform:translateY(0)}
+@keyframes pulso-album{
+  0%{box-shadow:0 0 0 0 rgba(37,211,102,.55)}
+  70%{box-shadow:0 0 0 14px rgba(37,211,102,0)}
+  100%{box-shadow:0 0 0 0 rgba(37,211,102,0)}
+}
 .btn:disabled{opacity:.6;cursor:default}
 .btn.gold{background:var(--gold)}
 .btn.gold:hover{background:#9a7641}
@@ -157,7 +165,7 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
       </a>
     </div>
 
-    <a class="btn" id="link-album" href="#" target="_blank" rel="noopener" style="margin-top:18px">Ver minhas fotos</a>
+    <a class="btn btn-album" id="link-album" href="#" target="_blank" rel="noopener" style="margin-top:18px">Ver minhas fotos</a>
     <p class="sem-album" id="sem-album" hidden>O álbum ainda está sendo preparado com todo cuidado — avisaremos pelo WhatsApp assim que estiver pronto. 💛</p>
 
     <button class="logout" id="btn-sair">Sair</button>
