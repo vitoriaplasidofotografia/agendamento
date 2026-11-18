@@ -240,6 +240,7 @@ a.zap:hover{text-decoration:underline}
           <div class="fin custo"><div class="rotulo">Investido em anúncios</div><div class="numero" id="fin-custo-anuncios">R$ 0,00</div></div>
           <div class="fin custo"><div class="rotulo">Custo total (produtos + anúncios)</div><div class="numero" id="fin-custo-total">R$ 0,00</div></div>
           <div class="fin lucro"><div class="rotulo">Lucro estimado (faturamento − custos)</div><div class="numero" id="fin-lucro">R$ 0,00</div></div>
+          <div class="fin lucro"><div class="rotulo">Margem de lucro</div><div class="numero" id="fin-margem">0%</div></div>
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">O valor investido em anúncios é o mesmo informado na aba "Anúncios".</p>
       </div>
@@ -610,7 +611,11 @@ function desenhar() {
   $('fin-custo').textContent = formatarReais(custo);
   $('fin-custo-anuncios').textContent = formatarReais(investimentoAnuncios);
   $('fin-custo-total').textContent = formatarReais(custoTotal);
-  $('fin-lucro').textContent = formatarReais(pago + saldo - custoTotal);
+  const faturamento = pago + saldo;
+  const lucro = faturamento - custoTotal;
+  $('fin-lucro').textContent = formatarReais(lucro);
+  const margem = faturamento > 0 ? (lucro / faturamento) * 100 : 0;
+  $('fin-margem').textContent = margem.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
 
   const faturaPorOrigem = { 'Indicação': 0, 'Orgânico': 0, 'Anúncio': 0, '': 0 };
   ativos.forEach((a) => {
