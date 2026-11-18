@@ -186,7 +186,7 @@ a.zap:hover{text-decoration:underline}
       <button class="aba" id="aba-financeiro" type="button">Financeiro</button>
       <button class="aba" id="aba-meta" type="button">Meta</button>
       <button class="aba" id="aba-kanban" type="button">Kanban</button>
-      <button class="aba" id="aba-negociacao" type="button">Em negociação</button>
+      <button class="aba" id="aba-negociacao" type="button">Em pré-agendamento</button>
       <button class="aba" id="aba-anuncios" type="button">Anúncios</button>
     </div>
 
@@ -285,18 +285,18 @@ a.zap:hover{text-decoration:underline}
       <div class="card">
         <div class="bloco-titulo">Quantidade de agendamentos por origem</div>
         <div class="financas" id="meta-qtd-origem"></div>
-        <p class="atualiza" style="text-align:left;margin:8px 0 0" id="meta-qtd-origem-vazio" hidden>Ainda não há agendamentos nem leads em negociação com origem informada.</p>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0" id="meta-qtd-origem-vazio" hidden>Ainda não há agendamentos nem leads em pré-agendamento com origem informada.</p>
       </div>
 
       <div class="card">
-        <div class="bloco-titulo">Com os leads em negociação</div>
+        <div class="bloco-titulo">Com os leads em pré-agendamento</div>
         <div class="financas">
-          <div class="fin"><div class="rotulo">Em negociação (valor cheio dos pacotes)</div><div class="numero" id="meta-negociacao-total">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Em pré-agendamento (valor cheio dos pacotes)</div><div class="numero" id="meta-negociacao-total">R$ 0,00</div></div>
           <div class="fin"><div class="rotulo">Projeção (× taxa de conversão)</div><div class="numero" id="meta-negociacao-projetada">R$ 0,00</div></div>
           <div class="fin fatura"><div class="rotulo">Faturamento atual + projeção</div><div class="numero" id="meta-negociacao-faturamento">R$ 0,00</div></div>
-          <div class="fin"><div class="rotulo">Falta pra meta (com negociação)</div><div class="numero" id="meta-negociacao-falta">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Falta pra meta (com pré-agendamento)</div><div class="numero" id="meta-negociacao-falta">R$ 0,00</div></div>
         </div>
-        <p class="atualiza" style="text-align:left;margin:8px 0 0">A taxa de conversão é ajustada na aba "Em negociação".</p>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">A taxa de conversão é ajustada na aba "Em pré-agendamento".</p>
       </div>
 
       <p class="atualiza" style="text-align:left;margin:10px 0 0">Ticket médio e faturamento consideram o período filtrado acima. Horários livres contam até o fim da agenda (19/12), a partir de hoje.</p>
@@ -311,7 +311,7 @@ a.zap:hover{text-decoration:underline}
           <div class="fin"><div class="rotulo">Lucro / ROI até agora</div><div class="numero" id="meta-anuncios-lucro">—</div></div>
         </div>
         <div class="financas">
-          <div class="fin"><div class="rotulo">Em negociação vindos de anúncio (valor cheio)</div><div class="numero" id="meta-anuncios-negociando">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Em pré-agendamento vindos de anúncio (valor cheio)</div><div class="numero" id="meta-anuncios-negociando">R$ 0,00</div></div>
           <div class="fin fatura"><div class="rotulo">Projeção com conversão</div><div class="numero" id="meta-anuncios-negociando-projetado">R$ 0,00</div></div>
           <div class="fin lucro"><div class="rotulo">Confirmado + projeção − investido</div><div class="numero" id="meta-anuncios-liquido">R$ 0,00</div></div>
         </div>
@@ -325,12 +325,12 @@ a.zap:hover{text-decoration:underline}
           <div class="fin"><div class="rotulo">Vendas fechadas (agendado, origem anúncio)</div><div class="numero" id="meta-anuncios-vendas">0</div></div>
           <div class="fin"><div class="rotulo">Vendas sendo negociadas (origem anúncio)</div><div class="numero" id="meta-anuncios-vendas-negociando">0</div></div>
           <div class="fin"><div class="rotulo">Taxa mensagem → venda atual</div><div class="numero" id="meta-anuncios-taxa-msg-venda">—</div></div>
-          <div class="fin"><div class="rotulo">Taxa mensagem → venda possível (c/ negociações)</div><div class="numero" id="meta-anuncios-taxa-msg-venda-possivel">—</div></div>
+          <div class="fin"><div class="rotulo">Taxa mensagem → venda possível (c/ pré-agendamentos)</div><div class="numero" id="meta-anuncios-taxa-msg-venda-possivel">—</div></div>
         </div>
         <div class="financas">
           <div class="fin"><div class="rotulo">Custo por mensagem</div><div class="numero" id="meta-anuncios-custo-mensagem">—</div></div>
           <div class="fin"><div class="rotulo">Custo por venda atual (CAC)</div><div class="numero" id="meta-anuncios-custo-venda">—</div></div>
-          <div class="fin"><div class="rotulo">Custo por venda possível (c/ negociações)</div><div class="numero" id="meta-anuncios-custo-venda-possivel">—</div></div>
+          <div class="fin"><div class="rotulo">Custo por venda possível (c/ pré-agendamentos)</div><div class="numero" id="meta-anuncios-custo-venda-possivel">—</div></div>
         </div>
         <p class="atualiza" style="text-align:left;margin:8px 0 0">Mensagens recebidas você digita (vem do Gerenciador de Anúncios). O custo por mensagem e por venda usam o valor investido em anúncios, informado no bloco acima.</p>
       </div>
@@ -338,7 +338,7 @@ a.zap:hover{text-decoration:underline}
 
     <div id="view-negociacao" hidden>
       <div class="card">
-        <div class="bloco-titulo">Novo lead em negociação</div>
+        <div class="bloco-titulo">Novo lead em pré-agendamento</div>
         <div class="financas">
           <div class="fin editavel"><label for="neg-nome">Nome</label><input type="text" id="neg-nome" placeholder="Nome do lead"></div>
           <div class="fin editavel"><label for="neg-whatsapp">WhatsApp</label><input type="text" id="neg-whatsapp" placeholder="Com DDD"></div>
@@ -355,9 +355,10 @@ a.zap:hover{text-decoration:underline}
       <div class="card">
         <div class="bloco-titulo">Projeção com conversão</div>
         <div class="financas">
-          <div class="fin"><div class="rotulo">Em negociação (valor cheio)</div><div class="numero" id="neg-total-negociando">R$ 0,00</div></div>
+          <div class="fin"><div class="rotulo">Em pré-agendamento (quantidade)</div><div class="numero" id="neg-total-qtd">0</div></div>
+          <div class="fin"><div class="rotulo">Em pré-agendamento (valor cheio)</div><div class="numero" id="neg-total-negociando">R$ 0,00</div></div>
           <div class="fin editavel"><label for="neg-taxa-conversao">Taxa de conversão esperada (%)</label><input type="number" id="neg-taxa-conversao" min="0" max="100" step="5" value="50"></div>
-          <div class="fin fatura"><div class="rotulo">Projeção (negociação × taxa)</div><div class="numero" id="neg-total-projetado">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Projeção (pré-agendamento × taxa)</div><div class="numero" id="neg-total-projetado">R$ 0,00</div></div>
         </div>
       </div>
 
@@ -1385,7 +1386,7 @@ $('meta-media-extras').addEventListener('input', () => { guardarNum(CHAVE_MEDIA_
 $('meta-anuncios-investimento').addEventListener('input', () => { guardarNum(CHAVE_ANUNCIOS_INVESTIMENTO, $('meta-anuncios-investimento').value || 0); desenharMeta(); });
 $('meta-anuncios-mensagens').addEventListener('input', () => { guardarNum(CHAVE_ANUNCIOS_MENSAGENS, $('meta-anuncios-mensagens').value || 0); desenharMeta(); });
 
-/* ---------- aba Em negociação ---------- */
+/* ---------- aba Em pré-agendamento ---------- */
 const CHAVE_NEG_TAXA = 'painel-neg-taxa-conversao';
 const STATUS_NEG_LABEL = { negociando: 'negociando', perdido: 'perdido', convertido: 'convertido' };
 let negociacoes = [];
@@ -1433,13 +1434,14 @@ function desenharNegociacao() {
   const ativos = negociacoes.filter((n) => n.status === 'negociando');
   const outros = negociacoes.filter((n) => n.status !== 'negociando');
   if (!negociacoes.length) {
-    lista.innerHTML = '<p class="atualiza">Nenhum lead em negociação ainda.</p>';
+    lista.innerHTML = '<p class="atualiza">Nenhum lead em pré-agendamento ainda.</p>';
   } else {
     ativos.forEach((n) => lista.appendChild(linhaNegociacao(n)));
     outros.forEach((n) => lista.appendChild(linhaNegociacao(n)));
   }
   const totalNegociando = ativos.reduce((s, n) => s + (n.valor || 0), 0);
   const taxaConversao = lerNum(CHAVE_NEG_TAXA, 50) / 100;
+  $('neg-total-qtd').textContent = String(ativos.length);
   $('neg-total-negociando').textContent = formatarReais(totalNegociando);
   $('neg-total-projetado').textContent = formatarReais(totalNegociando * taxaConversao);
 }
