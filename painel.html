@@ -1531,6 +1531,8 @@ function linhaNegociacao(n) {
   info.appendChild(nome); info.appendChild(linha1); info.appendChild(linha2);
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
+  const e = document.createElement('button'); e.className = 'btn ghost'; e.type = 'button'; e.textContent = 'Editar';
+  acoes.appendChild(e);
   if (n.status === 'negociando') {
     const c = document.createElement('button'); c.className = 'btn prim'; c.type = 'button'; c.textContent = 'Converteu';
     c.addEventListener('click', () => negociacaoMudarStatus(n, 'convertido', c));
@@ -1547,8 +1549,71 @@ function linhaNegociacao(n) {
   x.addEventListener('click', () => negociacaoExcluir(n, x));
   acoes.appendChild(x);
 
-  el.appendChild(info); el.appendChild(acoes);
+  const edicao = linhaEdicaoNegociacao(n);
+  e.addEventListener('click', () => { edicao.hidden = !edicao.hidden; });
+
+  el.appendChild(info); el.appendChild(acoes); el.appendChild(edicao);
   return el;
+}
+
+function linhaEdicaoNegociacao(n) {
+  const div = document.createElement('div');
+  div.className = 'edicao-neg';
+  div.hidden = true;
+  div.style.cssText = 'grid-column:1/-1;display:grid;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)';
+
+  const campoNome = document.createElement('div');
+  campoNome.innerHTML = '<label>Nome</label>';
+  const inputNome = document.createElement('input'); inputNome.type = 'text'; inputNome.value = n.nome;
+  campoNome.appendChild(inputNome);
+
+  const campoWhats = document.createElement('div');
+  campoWhats.innerHTML = '<label>WhatsApp</label>';
+  const inputWhats = document.createElement('input'); inputWhats.type = 'text'; inputWhats.value = n.whatsapp;
+  campoWhats.appendChild(inputWhats);
+
+  const campoPacote = document.createElement('div');
+  campoPacote.innerHTML = '<label>Pacote de interesse</label>';
+  const selPacote = document.createElement('select');
+  pacotesDisponiveis.forEach((p) => {
+    const op = document.createElement('option'); op.value = p.nome; op.textContent = p.nome + ' · ' + p.valor_txt;
+    if (p.nome === n.pacote) op.selected = true;
+    selPacote.appendChild(op);
+  });
+  campoPacote.appendChild(selPacote);
+
+  const campoObs = document.createElement('div');
+  campoObs.innerHTML = '<label>Observação</label>';
+  const inputObs = document.createElement('input'); inputObs.type = 'text'; inputObs.value = n.observacao || '';
+  campoObs.appendChild(inputObs);
+
+  const botoes = document.createElement('div'); botoes.style.cssText = 'display:flex;gap:8px';
+  const salvar = document.createElement('button'); salvar.className = 'btn prim'; salvar.type = 'button'; salvar.textContent = 'Salvar';
+  const cancelar = document.createElement('button'); cancelar.className = 'btn ghost'; cancelar.type = 'button'; cancelar.textContent = 'Cancelar';
+  cancelar.addEventListener('click', () => { div.hidden = true; });
+  const msg = document.createElement('p'); msg.className = 'erro'; msg.style.margin = '0';
+
+  salvar.addEventListener('click', async () => {
+    const nome = inputNome.value.trim();
+    if (nome.length < 2) { msg.textContent = 'Informe o nome do lead.'; return; }
+    salvar.disabled = true;
+    try {
+      const r = await chamar({
+        acao: 'negociacao_editar', senha: senha, id: n.id,
+        nome: nome, whatsapp: inputWhats.value.trim(), pacote: selPacote.value, observacao: inputObs.value.trim(),
+      });
+      if (!r.ok) { msg.textContent = r.erro; salvar.disabled = false; return; }
+      await carregarNegociacao();
+    } catch (ex) {
+      msg.textContent = 'Não consegui salvar. Tente de novo.';
+      salvar.disabled = false;
+    }
+  });
+
+  botoes.appendChild(salvar); botoes.appendChild(cancelar);
+  div.appendChild(campoNome); div.appendChild(campoWhats); div.appendChild(campoPacote); div.appendChild(campoObs);
+  div.appendChild(botoes); div.appendChild(msg);
+  return div;
 }
 
 async function negociacaoMudarStatus(n, novoStatus, botao) {
