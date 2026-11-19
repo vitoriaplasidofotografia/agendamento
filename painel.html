@@ -274,6 +274,14 @@ a.zap:hover{text-decoration:underline}
         <p class="atualiza" style="text-align:left;margin:8px 0 0">O valor investido em anúncios é o mesmo informado na aba "Anúncios".</p>
       </div>
       <div class="card">
+        <div class="bloco-titulo">Em pré-agendamento</div>
+        <div class="financas">
+          <div class="fin"><div class="rotulo">Em pré-agendamento (valor cheio dos pacotes)</div><div class="numero" id="fin-negociacao-total">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Faturamento + em pré-agendamento</div><div class="numero" id="fin-fatura-com-negociacao">R$ 0,00</div></div>
+        </div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">Soma o faturamento (recebido + a receber) com o valor cheio de todos os leads que ainda estão em pré-agendamento, na aba "Em pré-agendamento".</p>
+      </div>
+      <div class="card">
         <div class="bloco-titulo">Faturamento por origem do lead</div>
         <div class="financas">
           <div class="fin"><div class="rotulo">Indicação</div><div class="numero" id="fin-origem-indicacao">R$ 0,00</div></div>
@@ -650,6 +658,9 @@ function desenhar() {
   $('fin-pendente').textContent = formatarReais(pendente);
   $('fin-saldo').textContent = formatarReais(saldo);
   $('fin-fatura').textContent = formatarReais(pago + saldo);
+  const totalNegociandoFin = negociacoes.filter((n) => n.status === 'negociando').reduce((s, n) => s + (n.valor || 0), 0);
+  $('fin-negociacao-total').textContent = formatarReais(totalNegociandoFin);
+  $('fin-fatura-com-negociacao').textContent = formatarReais(pago + saldo + totalNegociandoFin);
   $('fin-extras-recebido').textContent = formatarReais(extrasRecebido);
   $('fin-extras-receber').textContent = formatarReais(extrasAReceber);
   $('fin-impressas-recebido').textContent = formatarReais(impressasRecebido);
@@ -1495,6 +1506,7 @@ async function carregarNegociacao() {
   }
   desenharNegociacao();
   desenharMeta();
+  if (dados.length) desenhar();
 }
 
 function desenharNegociacao() {
