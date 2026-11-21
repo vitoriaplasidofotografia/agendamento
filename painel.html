@@ -103,6 +103,12 @@ a.zap:hover{text-decoration:underline}
 .custos .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500}
 .custos .numero{font-family:var(--disp);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .bloco-titulo{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:0 0 10px;font-weight:600}
+.grafico-pizza{display:flex;align-items:center;gap:26px;flex-wrap:wrap;justify-content:center;padding:6px 0}
+.pizza-circulo{width:160px;height:160px;border-radius:50%;flex:0 0 auto}
+.pizza-legenda{display:flex;flex-direction:column;gap:9px;font-size:13.5px}
+.pizza-legenda .item{display:flex;align-items:center;gap:8px}
+.pizza-legenda .cor{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.pizza-vazio{color:var(--soft);font-size:14px;text-align:center;padding:24px 0;width:100%}
 .fin.editavel label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500;display:block;line-height:1.4}
 .fin.editavel input{width:100%;border:1px solid var(--line-forte);background:#fff;border-radius:var(--raio-p);padding:8px 10px;font-family:var(--disp);font-size:16px;font-weight:600;color:var(--ink)}
 .fin.editavel input:focus{border-color:var(--blue)}
@@ -217,6 +223,7 @@ a.zap:hover{text-decoration:underline}
       <button class="aba" id="aba-negociacao" type="button">Em pré-agendamento</button>
       <button class="aba" id="aba-anuncios" type="button">Anúncios</button>
       <button class="aba" id="aba-calendario" type="button">Calendário</button>
+      <button class="aba" id="aba-relatorio" type="button">Relatório</button>
     </div>
 
     <div class="card" id="card-filtros">
@@ -391,6 +398,17 @@ a.zap:hover{text-decoration:underline}
         </div>
         <div class="cal-grid" id="cal-grid"><p class="atualiza" style="grid-column:1/-1;text-align:center">Carregando…</p></div>
         <p class="atualiza" style="text-align:left;margin-top:10px">Toque num dia pra ver os horários e quem está agendado em cada um.</p>
+      </div>
+    </div>
+
+    <div id="view-relatorio" hidden>
+      <div class="card">
+        <div class="bloco-titulo">Pacotes vendidos</div>
+        <div class="grafico-pizza" id="pizza-pacotes"></div>
+      </div>
+      <div class="card">
+        <div class="bloco-titulo">Cenários mais pedidos</div>
+        <div class="grafico-pizza" id="pizza-cenarios"></div>
       </div>
     </div>
 
@@ -728,6 +746,51 @@ function desenhar() {
   desenharFinanceiro();
   desenharMeta();
   desenharKanban();
+  desenharRelatorio();
+}
+
+const CORES_PIZZA = ['#14a86b', '#c27a00', '#5b3fd6', '#d64545', '#2e86de', '#8a6a3f'];
+
+function construirPizza(containerId, contagens) {
+  const el = $(containerId);
+  el.innerHTML = '';
+  const entradas = Object.keys(contagens).filter((k) => contagens[k] > 0).sort((a, b) => contagens[b] - contagens[a]);
+  const total = entradas.reduce((s, k) => s + contagens[k], 0);
+  if (!total) { el.innerHTML = '<p class="pizza-vazio">Sem dados no período selecionado.</p>'; return; }
+  let acc = 0;
+  const partes = entradas.map((k, i) => {
+    const pct = (contagens[k] / total) * 100;
+    const inicio = acc; acc += pct;
+    return CORES_PIZZA[i % CORES_PIZZA.length] + ' ' + inicio.toFixed(2) + '% ' + acc.toFixed(2) + '%';
+  });
+  const circulo = document.createElement('div');
+  circulo.className = 'pizza-circulo';
+  circulo.style.background = 'conic-gradient(' + partes.join(', ') + ')';
+  const legenda = document.createElement('div');
+  legenda.className = 'pizza-legenda';
+  entradas.forEach((k, i) => {
+    const pct = Math.round((contagens[k] / total) * 100);
+    const item = document.createElement('div'); item.className = 'item';
+    const cor = document.createElement('span'); cor.className = 'cor'; cor.style.background = CORES_PIZZA[i % CORES_PIZZA.length];
+    const texto = document.createElement('span'); texto.textContent = k + ' — ' + contagens[k] + ' (' + pct + '%)';
+    item.appendChild(cor); item.appendChild(texto);
+    legenda.appendChild(item);
+  });
+  el.appendChild(circulo); el.appendChild(legenda);
+}
+
+function desenharRelatorio() {
+  const ativos = dados.filter((a) => a.status !== STATUS_CANC);
+  const porPacote = {};
+  const porCenario = {};
+  ativos.forEach((a) => {
+    const p = a.pacote || 'Não informado';
+    porPacote[p] = (porPacote[p] || 0) + 1;
+    const c = a.cenario || 'Não informado';
+    porCenario[c] = (porCenario[c] || 0) + 1;
+  });
+  construirPizza('pizza-pacotes', porPacote);
+  construirPizza('pizza-cenarios', porCenario);
 }
 
 function desenharFinanceiro() {
@@ -1374,14 +1437,15 @@ $('periodo').addEventListener('change', () => {
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 function trocarAba(ativa) {
-  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario' };
-  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario' };
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario', relatorio: 'aba-relatorio' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario', relatorio: 'view-relatorio' };
   Object.keys(abas).forEach((k) => {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
   });
   $('card-filtros').hidden = ativa === 'negociacao' || ativa === 'calendario';
   if (ativa === 'calendario' && !calCarregouAlgumaVez) { calCarregouAlgumaVez = true; carregarCalendario(); }
+  if (ativa === 'relatorio') desenharRelatorio();
 }
 $('aba-lista').addEventListener('click', () => trocarAba('lista'));
 $('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
@@ -1390,6 +1454,7 @@ $('aba-kanban').addEventListener('click', () => trocarAba('kanban'));
 $('aba-negociacao').addEventListener('click', () => trocarAba('negociacao'));
 $('aba-anuncios').addEventListener('click', () => trocarAba('anuncios'));
 $('aba-calendario').addEventListener('click', () => trocarAba('calendario'));
+$('aba-relatorio').addEventListener('click', () => trocarAba('relatorio'));
 
 /* ---------- aba Meta ---------- */
 function lerNum(chave, padrao) { try { const v = localStorage.getItem(chave); return v === null ? padrao : Number(v); } catch (e) { return padrao; } }
