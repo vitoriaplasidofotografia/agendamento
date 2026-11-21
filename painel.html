@@ -822,11 +822,23 @@ function abrirModal(a, etapa) {
   html += linhaModal('Data e horário', new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) + ' · ' + a.inicio);
   html += linhaModal('Cenário', a.cenario || '—');
   html += linhaModal('Pessoas', (a.pessoas || '?') + ' pessoa(s)');
-  html += linhaModal('Crianças (nome e idade)', a.nome_criancas || '—');
+  html += '<div class="modal-linha"><span class="rot">Crianças (nome e idade)</span><span class="val">' + (a.nome_criancas || '—') + '<button class="btn-lapis" id="modal-criancas-editar" type="button" title="Editar nome e idade das crianças">✏️</button></span></div>';
+  html += '<div class="edicao-sinal edicao-link" id="modal-criancas-edicao" hidden style="margin:2px 0 8px">';
+  html += '<input type="text" id="modal-criancas-input" placeholder="Ex.: Sofia (5 anos) e Miguel (3 anos)" value="' + (a.nome_criancas || '').replace(/"/g, '&quot;') + '">';
+  html += '<button type="button" id="modal-criancas-salvar">Salvar</button>';
+  html += '<button type="button" class="cancelar" id="modal-criancas-cancelar">Cancelar</button>';
+  html += '</div>';
+  html += '<p id="modal-criancas-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   html += linhaModal('Etapa do Kanban', etapa + '. ' + ETAPAS[etapa - 1]);
   html += '<div class="modal-secao">Contato</div>';
   html += linhaModal('WhatsApp', '<a class="zap" target="_blank" rel="noopener" href="https://wa.me/' + numero + '">' + numero + '</a>');
-  html += linhaModal('E-mail', a.email || '—');
+  html += '<div class="modal-linha"><span class="rot">E-mail</span><span class="val">' + (a.email || '—') + '<button class="btn-lapis" id="modal-email-editar" type="button" title="Editar e-mail">✏️</button></span></div>';
+  html += '<div class="edicao-sinal edicao-link" id="modal-email-edicao" hidden style="margin:2px 0 8px">';
+  html += '<input type="email" id="modal-email-input" placeholder="email@exemplo.com" value="' + (a.email || '').replace(/"/g, '&quot;') + '">';
+  html += '<button type="button" id="modal-email-salvar">Salvar</button>';
+  html += '<button type="button" class="cancelar" id="modal-email-cancelar">Cancelar</button>';
+  html += '</div>';
+  html += '<p id="modal-email-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   html += '<div class="modal-secao">Origem do lead</div>';
   html += '<div class="modal-linha"><span class="rot">De onde veio</span><span class="val"><select id="modal-origem">';
   html += '<option value=""' + (!a.origem ? ' selected' : '') + '>Não informado</option>';
@@ -908,6 +920,52 @@ function abrirModal(a, etapa) {
       await carregar();
     } catch (err) {
       msgOrigem.textContent = 'Não consegui salvar. Tente de novo.';
+    }
+  });
+  $('modal-criancas-editar').addEventListener('click', () => {
+    $('modal-criancas-edicao').hidden = false;
+    $('modal-criancas-input').focus();
+  });
+  $('modal-criancas-cancelar').addEventListener('click', () => { $('modal-criancas-edicao').hidden = true; });
+  $('modal-criancas-salvar').addEventListener('click', async () => {
+    const nomeCriancas = $('modal-criancas-input').value.trim();
+    const msgCriancas = $('modal-criancas-msg');
+    const botaoCriancas = $('modal-criancas-salvar');
+    botaoCriancas.disabled = true; botaoCriancas.textContent = 'Salvando…';
+    msgCriancas.textContent = '';
+    try {
+      const r = await chamar({ acao: 'nome_criancas', senha: senha, id: a.id, nome_criancas: nomeCriancas });
+      if (!r.ok) { msgCriancas.textContent = r.erro; return; }
+      a.nome_criancas = r.nome_criancas;
+      abrirModal(a, etapa);
+      carregar();
+    } catch (err) {
+      msgCriancas.textContent = 'Não consegui salvar. Tente de novo.';
+    } finally {
+      botaoCriancas.disabled = false; botaoCriancas.textContent = 'Salvar';
+    }
+  });
+  $('modal-email-editar').addEventListener('click', () => {
+    $('modal-email-edicao').hidden = false;
+    $('modal-email-input').focus();
+  });
+  $('modal-email-cancelar').addEventListener('click', () => { $('modal-email-edicao').hidden = true; });
+  $('modal-email-salvar').addEventListener('click', async () => {
+    const email = $('modal-email-input').value.trim();
+    const msgEmail = $('modal-email-msg');
+    const botaoEmail = $('modal-email-salvar');
+    botaoEmail.disabled = true; botaoEmail.textContent = 'Salvando…';
+    msgEmail.textContent = '';
+    try {
+      const r = await chamar({ acao: 'email', senha: senha, id: a.id, email: email });
+      if (!r.ok) { msgEmail.textContent = r.erro; return; }
+      a.email = r.email;
+      abrirModal(a, etapa);
+      carregar();
+    } catch (err) {
+      msgEmail.textContent = 'Não consegui salvar. Tente de novo.';
+    } finally {
+      botaoEmail.disabled = false; botaoEmail.textContent = 'Salvar';
     }
   });
   if (a.status !== STATUS_CANC) {
