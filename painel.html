@@ -1214,6 +1214,9 @@ function linhaFinanceira(a) {
     const custo = document.createElement('span'); custo.className = 'tag custo';
     custo.textContent = 'custo ' + formatarReais(custoDe(a));
     linha2.appendChild(custo);
+    const tagForma = document.createElement('span'); tagForma.className = 'tag' + (a.forma_pagamento ? ' ok' : ' aguard');
+    tagForma.textContent = a.forma_pagamento ? a.forma_pagamento : 'forma de pagamento não definida';
+    linha2.appendChild(tagForma);
   }
   info.appendChild(nome); info.appendChild(linha1); info.appendChild(linha2);
 
@@ -1254,6 +1257,12 @@ function abrirModalFinanceiro(a) {
   html += linhaModal('Lote da reserva', LOTE_NOMES[Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1)]);
   html += linhaModal('Valor total', a.valor_txt);
   html += linhaModal('Sinal (30%)', a.sinal_txt + ' · ' + (a.status === STATUS_OK ? 'pago' : a.status === STATUS_CANC ? 'cancelado' : 'pendente'));
+  html += '<div class="modal-linha"><span class="rot">Forma de pagamento</span><span class="val">';
+  html += '<select id="modal-forma-pagamento" style="padding:4px 8px">';
+  ['', 'Dinheiro', 'Cartão', 'Pix'].forEach((f) => {
+    html += '<option value="' + f + '"' + (a.forma_pagamento === f ? ' selected' : '') + '>' + (f || 'Não definida') + '</option>';
+  });
+  html += '</select></span></div>';
   if (a.status !== STATUS_CANC) {
     html += linhaModal('Restante (70%)', formatarReais(lerReais(a.valor_txt) - lerReais(a.sinal_txt)) + ' · ' + (a.saldo_pago ? 'pago' : 'pendente'));
     html += '<button class="btn ' + (a.saldo_pago ? 'ghost' : 'prim') + '" id="modal-saldo-botao" type="button" style="width:100%;margin-top:4px">' + (a.saldo_pago ? 'Desfazer pago pacote' : 'Marcar pago pacote') + '</button>';
@@ -1279,6 +1288,7 @@ function abrirModalFinanceiro(a) {
   $('modal-caixa').innerHTML = html;
   $('modal-fundo').hidden = false;
   $('modal-fechar').addEventListener('click', fecharModal);
+  $('modal-forma-pagamento').addEventListener('change', (e) => mudarFormaPagamento(a, e.target.value, e.target));
   if (a.status !== STATUS_CANC) {
     const input = $('modal-extras-qtd');
     const inputImpressas = $('modal-impressas-qtd');
@@ -1333,6 +1343,20 @@ async function mudarSaldo(a, pago, botao) {
   } catch (e) {
     $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
     botao.disabled = false;
+  }
+}
+
+async function mudarFormaPagamento(a, forma, select) {
+  select.disabled = true;
+  try {
+    const r = await chamar({ acao: 'forma_pagamento', senha: senha, id: a.id, forma_pagamento: forma });
+    if (!r.ok) { $('erro-painel').textContent = r.erro; select.disabled = false; return; }
+    a.forma_pagamento = forma;
+    select.disabled = false;
+    desenharFinanceiro();
+  } catch (e) {
+    $('erro-painel').textContent = 'Não consegui salvar. Tente de novo.';
+    select.disabled = false;
   }
 }
 
