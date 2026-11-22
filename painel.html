@@ -224,6 +224,7 @@ a.zap:hover{text-decoration:underline}
       <button class="aba" id="aba-anuncios" type="button">Anúncios</button>
       <button class="aba" id="aba-calendario" type="button">Calendário</button>
       <button class="aba" id="aba-relatorio" type="button">Relatório</button>
+      <button class="aba" id="aba-extrato" type="button">Extrato</button>
     </div>
 
     <div class="card" id="card-filtros">
@@ -409,6 +410,34 @@ a.zap:hover{text-decoration:underline}
       <div class="card">
         <div class="bloco-titulo">Cenários mais pedidos</div>
         <div class="grafico-pizza" id="pizza-cenarios"></div>
+      </div>
+    </div>
+
+    <div id="view-extrato" hidden>
+      <div class="card">
+        <div class="bloco-titulo">Resumo da conta</div>
+        <div class="financas" id="extrato-resumo"></div>
+        <p class="atualiza" style="text-align:left;margin-top:10px">Soma tudo que deveria ter entrado (sinal, restante, fotos extras e impressas marcados como pagos na aba Agendamentos/Financeiro) e tudo que você lançar aqui como saída. Marque "conferido" em cada item depois de checar no extrato bancário de verdade — o saldo conferido mostra o que já bateu com o banco.</p>
+      </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Lançar saída (o que saiu da conta)</div>
+        <div class="financas">
+          <div class="fin editavel"><label for="extrato-saida-descricao">Descrição</label><input type="text" id="extrato-saida-descricao" placeholder="Ex.: compra de álbum impresso"></div>
+          <div class="fin editavel"><label for="extrato-saida-valor">Valor</label><input type="text" id="extrato-saida-valor" placeholder="0,00" inputmode="decimal"></div>
+        </div>
+        <button class="btn prim" id="extrato-saida-adicionar" type="button" style="width:100%;margin-top:10px">Adicionar saída</button>
+        <p id="extrato-saida-msg" style="font-size:12px;color:var(--danger);margin:8px 0 0"></p>
+      </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Entradas (o que deveria ter entrado na conta)</div>
+        <div id="extrato-entradas"></div>
+      </div>
+
+      <div class="card">
+        <div class="bloco-titulo">Saídas (lançadas por você)</div>
+        <div id="extrato-saidas"></div>
       </div>
     </div>
 
@@ -791,6 +820,144 @@ function desenharRelatorio() {
   });
   construirPizza('pizza-pacotes', porPacote);
   construirPizza('pizza-cenarios', porCenario);
+}
+
+/* ---------- aba Extrato ---------- */
+let extratoItens = [];
+let extratoCarregouAlgumaVez = false;
+
+async function carregarExtrato() {
+  try {
+    const r = await chamar({ acao: 'extrato_listar', senha: senha });
+    if (!r.ok) return;
+    extratoItens = r.itens || [];
+    desenharExtrato();
+  } catch (e) {}
+}
+
+function formatarDataExtrato(txt) {
+  const d = new Date(txt);
+  if (isNaN(d.getTime())) return txt;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function linhaExtrato(it) {
+  const el = document.createElement('div'); el.className = 'item';
+  const data = document.createElement('div'); data.className = 'hora'; data.textContent = formatarDataExtrato(it.criado_em);
+
+  const info = document.createElement('div');
+  const nome = document.createElement('div'); nome.className = 'nome';
+  nome.textContent = it.tipo === 'saida' ? it.descricao : (it.cliente + ' — ' + it.descricao);
+  const meta = document.createElement('div'); meta.className = 'meta';
+  const tagValor = document.createElement('span'); tagValor.className = 'tag ' + (it.tipo === 'saida' ? 'canc' : 'ok');
+  tagValor.textContent = formatarReais(it.valor);
+  meta.appendChild(tagValor);
+  const tagConf = document.createElement('span'); tagConf.className = 'tag ' + (it.conferido ? 'ok' : 'aguard');
+  tagConf.textContent = it.conferido ? 'conferido no banco' : 'não conferido';
+  meta.appendChild(tagConf);
+  info.appendChild(nome); info.appendChild(meta);
+
+  const acoes = document.createElement('div'); acoes.className = 'acoes';
+  const b = document.createElement('button'); b.className = it.conferido ? 'btn ghost' : 'btn prim'; b.type = 'button';
+  b.textContent = it.conferido ? 'Desfazer conferido' : 'Marcar conferido';
+  b.addEventListener('click', () => mudarExtratoConferido(it, !it.conferido, b));
+  acoes.appendChild(b);
+  if (it.tipo === 'saida') {
+    const ed = document.createElement('button'); ed.className = 'btn ghost'; ed.type = 'button'; ed.textContent = 'Editar';
+    ed.addEventListener('click', () => editarExtratoSaida(it));
+    acoes.appendChild(ed);
+    const del = document.createElement('button'); del.className = 'btn ghost'; del.type = 'button'; del.textContent = 'Excluir';
+    del.addEventListener('click', () => excluirExtratoSaida(it));
+    acoes.appendChild(del);
+  }
+
+  el.appendChild(data); el.appendChild(info); el.appendChild(acoes);
+  return el;
+}
+
+function desenharExtrato() {
+  const entradas = extratoItens.filter((it) => it.tipo !== 'saida').sort((a, b) => (a.criado_em < b.criado_em ? 1 : -1));
+  const saidas = extratoItens.filter((it) => it.tipo === 'saida').sort((a, b) => (a.criado_em < b.criado_em ? 1 : -1));
+
+  const elEntradas = $('extrato-entradas');
+  elEntradas.innerHTML = '';
+  if (!entradas.length) elEntradas.innerHTML = '<p class="vazio">Nenhuma entrada ainda. Assim que você marcar um sinal, restante, fotos extras ou impressas como pago na aba Agendamentos/Financeiro, aparece aqui.</p>';
+  entradas.forEach((it) => elEntradas.appendChild(linhaExtrato(it)));
+
+  const elSaidas = $('extrato-saidas');
+  elSaidas.innerHTML = '';
+  if (!saidas.length) elSaidas.innerHTML = '<p class="vazio">Nenhuma saída lançada ainda.</p>';
+  saidas.forEach((it) => elSaidas.appendChild(linhaExtrato(it)));
+
+  const totalEntradas = entradas.reduce((s, it) => s + it.valor, 0);
+  const totalEntradasConferidas = entradas.filter((it) => it.conferido).reduce((s, it) => s + it.valor, 0);
+  const totalSaidas = saidas.reduce((s, it) => s + it.valor, 0);
+  const totalSaidasConferidas = saidas.filter((it) => it.conferido).reduce((s, it) => s + it.valor, 0);
+
+  const resumo = $('extrato-resumo');
+  resumo.innerHTML = '';
+  [
+    ['Total em entradas', totalEntradas],
+    ['Entradas conferidas no banco', totalEntradasConferidas],
+    ['Total em saídas', totalSaidas],
+    ['Saídas conferidas no banco', totalSaidasConferidas],
+    ['Saldo esperado (entradas − saídas)', totalEntradas - totalSaidas],
+    ['Saldo já conferido no banco', totalEntradasConferidas - totalSaidasConferidas],
+  ].forEach(([rot, val]) => {
+    const div = document.createElement('div'); div.className = 'fin';
+    div.innerHTML = '<div class="rotulo">' + rot + '</div><div class="numero">' + formatarReais(val) + '</div>';
+    resumo.appendChild(div);
+  });
+}
+
+async function mudarExtratoConferido(it, conferido, botao) {
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'extrato_conferir', senha: senha, id: it.id, conferido: conferido });
+    if (!r.ok) { botao.disabled = false; return; }
+    it.conferido = conferido;
+    desenharExtrato();
+  } catch (e) {
+    botao.disabled = false;
+  }
+}
+
+$('extrato-saida-adicionar').addEventListener('click', async () => {
+  const descricao = $('extrato-saida-descricao').value.trim();
+  const valor = lerReais($('extrato-saida-valor').value);
+  const msg = $('extrato-saida-msg');
+  msg.textContent = '';
+  if (!descricao || !valor) { msg.textContent = 'Preencha a descrição e o valor.'; return; }
+  const botao = $('extrato-saida-adicionar');
+  botao.disabled = true;
+  try {
+    const r = await chamar({ acao: 'extrato_saida_criar', senha: senha, descricao: descricao, valor: valor });
+    if (!r.ok) { msg.textContent = r.erro; botao.disabled = false; return; }
+    $('extrato-saida-descricao').value = '';
+    $('extrato-saida-valor').value = '';
+    botao.disabled = false;
+    carregarExtrato();
+  } catch (e) {
+    msg.textContent = 'Não consegui salvar. Tente de novo.';
+    botao.disabled = false;
+  }
+});
+
+async function editarExtratoSaida(it) {
+  const descricao = prompt('Descrição da saída:', it.descricao);
+  if (descricao === null || !descricao.trim()) return;
+  const valorTxt = prompt('Valor da saída:', String(it.valor).replace('.', ','));
+  if (valorTxt === null) return;
+  const valor = lerReais(valorTxt);
+  if (!valor) return;
+  const r = await chamar({ acao: 'extrato_saida_editar', senha: senha, id: it.id, descricao: descricao.trim(), valor: valor });
+  if (r.ok) carregarExtrato();
+}
+
+async function excluirExtratoSaida(it) {
+  if (!confirm('Excluir essa saída "' + it.descricao + '"?')) return;
+  const r = await chamar({ acao: 'extrato_saida_excluir', senha: senha, id: it.id });
+  if (r.ok) carregarExtrato();
 }
 
 function desenharFinanceiro() {
@@ -1461,15 +1628,16 @@ $('periodo').addEventListener('change', () => {
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 function trocarAba(ativa) {
-  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario', relatorio: 'aba-relatorio' };
-  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario', relatorio: 'view-relatorio' };
+  const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario', relatorio: 'aba-relatorio', extrato: 'aba-extrato' };
+  const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario', relatorio: 'view-relatorio', extrato: 'view-extrato' };
   Object.keys(abas).forEach((k) => {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
   });
-  $('card-filtros').hidden = ativa === 'negociacao' || ativa === 'calendario';
+  $('card-filtros').hidden = ativa === 'negociacao' || ativa === 'calendario' || ativa === 'extrato';
   if (ativa === 'calendario' && !calCarregouAlgumaVez) { calCarregouAlgumaVez = true; carregarCalendario(); }
   if (ativa === 'relatorio') desenharRelatorio();
+  if (ativa === 'extrato' && !extratoCarregouAlgumaVez) { extratoCarregouAlgumaVez = true; carregarExtrato(); }
 }
 $('aba-lista').addEventListener('click', () => trocarAba('lista'));
 $('aba-financeiro').addEventListener('click', () => trocarAba('financeiro'));
@@ -1479,6 +1647,7 @@ $('aba-negociacao').addEventListener('click', () => trocarAba('negociacao'));
 $('aba-anuncios').addEventListener('click', () => trocarAba('anuncios'));
 $('aba-calendario').addEventListener('click', () => trocarAba('calendario'));
 $('aba-relatorio').addEventListener('click', () => trocarAba('relatorio'));
+$('aba-extrato').addEventListener('click', () => trocarAba('extrato'));
 
 /* ---------- aba Meta ---------- */
 function lerNum(chave, padrao) { try { const v = localStorage.getItem(chave); return v === null ? padrao : Number(v); } catch (e) { return padrao; } }
