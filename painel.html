@@ -67,8 +67,8 @@ input:focus,select:focus{border-color:var(--blue)}
 .tag.passada-tag{color:#4a5567;background:#dde1e7}
 .tag.concluido-tag{color:#4a5567;background:#dde1e7}
 .hora{font-family:var(--disp);font-size:18px;font-weight:600;color:var(--blue)}
-.item-extrato{grid-template-columns:78px 1fr auto}
-.item-extrato .hora{font-size:13px;line-height:1.35;word-break:break-word;align-self:start;margin-top:2px}
+.item-extrato{grid-template-columns:1fr auto}
+.data-extrato{font-size:12px;font-weight:600;color:var(--blue);letter-spacing:.02em;margin-bottom:2px}
 .nome{font-weight:600;font-size:16px;color:var(--ink)}
 .meta{font-size:13px;color:var(--soft);display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
 .tag{font-family:var(--sans);font-size:12px;font-weight:500;padding:2px 9px;border-radius:var(--raio-p);border:1px solid transparent}
@@ -192,7 +192,7 @@ a.zap:hover{text-decoration:underline}
 .edicao-sinal button.cancelar{background:var(--panel);color:var(--soft);border:1px solid var(--line-forte)}
 .edicao-sinal.edicao-link input{width:auto;flex:1;text-align:left}
 [hidden]{display:none!important}
-@media (max-width:480px){.item{grid-template-columns:58px 1fr}.item-extrato{grid-template-columns:62px 1fr}.acoes{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
+@media (max-width:480px){.item{grid-template-columns:58px 1fr}.item-extrato{grid-template-columns:1fr}.acoes{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -845,11 +845,11 @@ function formatarDataExtrato(txt) {
 
 function linhaExtrato(it) {
   const el = document.createElement('div'); el.className = 'item item-extrato';
-  const data = document.createElement('div'); data.className = 'hora'; data.textContent = formatarDataExtrato(it.criado_em);
 
   const info = document.createElement('div');
+  const data = document.createElement('div'); data.className = 'data-extrato'; data.textContent = formatarDataExtrato(it.criado_em);
   const nome = document.createElement('div'); nome.className = 'nome';
-  nome.textContent = it.tipo === 'saida' ? it.descricao : (it.cliente + ' — ' + it.descricao);
+  nome.textContent = it.cliente ? (it.cliente + ' — ' + it.descricao) : it.descricao;
   const meta = document.createElement('div'); meta.className = 'meta';
   const tagValor = document.createElement('span'); tagValor.className = 'tag ' + (it.tipo === 'saida' ? 'canc' : 'ok');
   tagValor.textContent = formatarReais(it.valor);
@@ -857,7 +857,7 @@ function linhaExtrato(it) {
   const tagConf = document.createElement('span'); tagConf.className = 'tag ' + (it.conferido ? 'ok' : 'aguard');
   tagConf.textContent = it.conferido ? 'conferido no banco' : 'não conferido';
   meta.appendChild(tagConf);
-  info.appendChild(nome); info.appendChild(meta);
+  info.appendChild(data); info.appendChild(nome); info.appendChild(meta);
 
   const acoes = document.createElement('div'); acoes.className = 'acoes';
   const b = document.createElement('button'); b.className = it.conferido ? 'btn ghost' : 'btn prim'; b.type = 'button';
@@ -873,7 +873,7 @@ function linhaExtrato(it) {
     acoes.appendChild(del);
   }
 
-  el.appendChild(data); el.appendChild(info); el.appendChild(acoes);
+  el.appendChild(info); el.appendChild(acoes);
   return el;
 }
 
