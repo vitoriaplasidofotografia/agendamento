@@ -2185,7 +2185,7 @@ async function abrirDiaCalendario(dataIso) {
   } catch (e) {}
 
   const agendadosNoDia = calAgendamentosDoMes.filter((a) => a.data === dataIso && a.status !== STATUS_CANC);
-  const horarios = Array.from(new Set(livres.concat(ocupados))).sort();
+  const horarios = Array.from(new Set(livres.concat(ocupados).concat(agendadosNoDia.map((a) => a.inicio)))).sort();
   const conteudo = $('cal-dia-conteudo');
   if (!horarios.length) {
     conteudo.innerHTML = '<p class="atualiza" style="text-align:center">Sem expediente ou sem horários cadastrados nesse dia.</p>';
