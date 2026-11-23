@@ -122,8 +122,9 @@ a.zap:hover{text-decoration:underline}
 .tag.custo{color:var(--red);background:var(--red-soft)}
 .tag.prazo-digital{color:var(--blue);background:var(--blue-soft)}
 .tag.prazo-fisico{color:var(--purple);background:var(--purple-soft)}
-.abas{display:flex;gap:6px;margin-bottom:10px}
-.aba{appearance:none;border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:var(--raio-p);padding:8px 16px;font-family:var(--sans);font-weight:500;font-size:13px;cursor:pointer}
+.abas{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.abas::-webkit-scrollbar{display:none}
+.aba{appearance:none;border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:var(--raio-p);padding:8px 16px;font-family:var(--sans);font-weight:500;font-size:13px;cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .aba:hover{background:var(--bg2)}
 .aba.ativa{background:var(--blue);color:#fff;border-color:var(--blue)}
 #view-kanban{max-width:none;width:100vw;margin-left:calc(50% - 50vw);padding:0 24px;box-sizing:border-box}
@@ -135,9 +136,10 @@ a.zap:hover{text-decoration:underline}
 .coluna .contagem{font-size:11px;color:var(--soft)}
 .coluna.sobre{border-color:var(--blue);background:var(--blue-soft)}
 .coluna-cabeca{position:relative}
-.checklist{position:absolute;top:100%;left:0;z-index:40;width:280px;background:#fff;border:1px solid var(--line);border-radius:var(--raio);padding:12px 14px;box-shadow:0 8px 24px rgba(15,15,15,.14);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .12s,transform .12s;pointer-events:none}
+.checklist{position:absolute;top:100%;left:0;z-index:40;width:280px;max-width:calc(100vw - 48px);background:#fff;border:1px solid var(--line);border-radius:var(--raio);padding:12px 14px;box-shadow:0 8px 24px rgba(15,15,15,.14);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .12s,transform .12s;pointer-events:none}
 .checklist.alinhar-direita{left:auto;right:0}
-.coluna-cabeca:hover .checklist{opacity:1;visibility:visible;transform:translateY(0)}
+.coluna-cabeca:hover .checklist,.coluna-cabeca.aberto .checklist{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
+.coluna-cabeca{cursor:pointer}
 .checklist strong{font-family:var(--disp);font-size:12px;color:var(--ink);display:block;margin-bottom:6px}
 .checklist ul{margin:0;padding-left:16px}
 .checklist li{font-size:12px;color:var(--ink);line-height:1.45;margin-bottom:6px}
@@ -160,7 +162,9 @@ a.zap:hover{text-decoration:underline}
 .modal-linha{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
 .modal-linha:last-child{border-bottom:0}
 .modal-linha .rot{color:var(--soft)}
-.modal-linha .val{color:var(--ink);font-weight:500;text-align:right}
+.modal-linha .val{color:var(--ink);font-weight:500;text-align:right;overflow-wrap:anywhere;min-width:0}
+.modal-linha{flex-wrap:wrap}
+.modal-linha .rot{flex:0 0 auto}
 .modal-secao{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:16px 0 2px}
 .modal-secao:first-of-type{margin-top:12px}
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -182,7 +186,7 @@ a.zap:hover{text-decoration:underline}
 .dia-slot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
 .dia-slot:last-child{border-bottom:0}
 .dia-slot .hora{font-weight:600;color:var(--ink);flex:0 0 auto}
-.dia-slot .quem{flex:1;text-align:right;color:var(--soft)}
+.dia-slot .quem{flex:1;text-align:right;color:var(--soft);min-width:0;overflow-wrap:anywhere}
 .dia-slot.ocupado{cursor:pointer}
 .dia-slot.ocupado .quem{color:var(--ink)}
 .btn-lapis{appearance:none;border:0;background:none;cursor:pointer;font-size:13px;padding:0 0 0 6px;line-height:1;vertical-align:middle}
@@ -981,6 +985,10 @@ function desenharFinanceiro() {
   });
 }
 
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.coluna-cabeca')) document.querySelectorAll('.coluna-cabeca.aberto').forEach((c) => c.classList.remove('aberto'));
+});
+
 function desenharKanban() {
   const board = $('kanban');
   board.innerHTML = '';
@@ -1005,6 +1013,11 @@ function desenharKanban() {
     checklist.innerHTML = '<strong>Checklist — ' + nome + '</strong>';
     checklist.appendChild(ul);
     cabeca.appendChild(titulo); cabeca.appendChild(contagem); cabeca.appendChild(checklist);
+    cabeca.addEventListener('click', (e) => {
+      if (e.target.closest('.checklist')) return;
+      const aberto = cabeca.classList.toggle('aberto');
+      if (aberto) document.querySelectorAll('.coluna-cabeca.aberto').forEach((c) => { if (c !== cabeca) c.classList.remove('aberto'); });
+    });
     col.appendChild(cabeca);
 
     const soltar = document.createElement('div'); soltar.className = 'soltar-aqui';
