@@ -261,6 +261,10 @@ a.zap:hover{text-decoration:underline}
     </div>
 
     <div id="view-lista">
+      <div class="card">
+        <label for="busca-whatsapp">Buscar por WhatsApp</label>
+        <input type="text" id="busca-whatsapp" placeholder="Ex.: 51999999999" inputmode="numeric">
+      </div>
       <div id="lista"></div>
     </div>
 
@@ -762,9 +766,10 @@ function desenhar() {
 
   const lista = $('lista');
   lista.innerHTML = '';
-  const listaVisivel = dados.filter((a) => a.status !== STATUS_CANC);
+  let listaVisivel = dados.filter((a) => a.status !== STATUS_CANC);
+  if (buscaWhatsapp) listaVisivel = listaVisivel.filter((a) => (a.whatsapp || '').replace(/\D/g, '').indexOf(buscaWhatsapp) !== -1);
   if (!listaVisivel.length) {
-    lista.innerHTML = '<p class="vazio">Nenhum agendamento neste período.</p>';
+    lista.innerHTML = '<p class="vazio">' + (buscaWhatsapp ? 'Nenhum agendamento com esse WhatsApp.' : 'Nenhum agendamento neste período.') + '</p>';
     return;
   }
   let diaAtual = '';
@@ -1706,6 +1711,11 @@ $('periodo').addEventListener('change', () => {
 });
 $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
+let buscaWhatsapp = '';
+$('busca-whatsapp').addEventListener('input', (e) => {
+  buscaWhatsapp = e.target.value.replace(/\D/g, '');
+  desenhar();
+});
 function trocarAba(ativa) {
   const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario', relatorio: 'aba-relatorio', extrato: 'aba-extrato' };
   const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario', relatorio: 'view-relatorio', extrato: 'view-extrato' };
