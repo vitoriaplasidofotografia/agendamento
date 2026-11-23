@@ -1066,7 +1066,15 @@ function abrirModal(a, etapa) {
   html += '<div class="modal-secao">Sessão</div>';
   html += linhaModal('Data e horário', new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) + ' · ' + a.inicio);
   html += linhaModal('Cenário', a.cenario || '—');
-  html += linhaModal('Pessoas', (a.pessoas || '?') + ' pessoa(s)');
+  html += '<div class="modal-linha"><span class="rot">Pessoas</span><span class="val">' + (a.pessoas || '?') + ' pessoa(s)<button class="btn-lapis" id="modal-pessoas-editar" type="button" title="Editar número de pessoas">✏️</button></span></div>';
+  html += '<div class="edicao-sinal" id="modal-pessoas-edicao" hidden style="margin:2px 0 8px">';
+  html += '<select id="modal-pessoas-input">';
+  [1, 2, 3, 4].forEach((n) => { html += '<option value="' + n + '"' + ((a.pessoas || 0) === n ? ' selected' : '') + '>' + n + ' pessoa(s)</option>'; });
+  html += '</select>';
+  html += '<button type="button" id="modal-pessoas-salvar">Salvar</button>';
+  html += '<button type="button" class="cancelar" id="modal-pessoas-cancelar">Cancelar</button>';
+  html += '</div>';
+  html += '<p id="modal-pessoas-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   html += '<div class="modal-linha"><span class="rot">Crianças (nome e idade)</span><span class="val">' + (a.nome_criancas || '—') + '<button class="btn-lapis" id="modal-criancas-editar" type="button" title="Editar nome e idade das crianças">✏️</button></span></div>';
   html += '<div class="edicao-sinal edicao-link" id="modal-criancas-edicao" hidden style="margin:2px 0 8px">';
   html += '<input type="text" id="modal-criancas-input" placeholder="Ex.: Sofia (5 anos) e Miguel (3 anos)" value="' + (a.nome_criancas || '').replace(/"/g, '&quot;') + '">';
@@ -1198,6 +1206,29 @@ function abrirModal(a, etapa) {
       await carregar();
     } catch (err) {
       msgOrigem.textContent = 'Não consegui salvar. Tente de novo.';
+    }
+  });
+  $('modal-pessoas-editar').addEventListener('click', () => {
+    $('modal-pessoas-edicao').hidden = false;
+    $('modal-pessoas-input').focus();
+  });
+  $('modal-pessoas-cancelar').addEventListener('click', () => { $('modal-pessoas-edicao').hidden = true; });
+  $('modal-pessoas-salvar').addEventListener('click', async () => {
+    const pessoas = parseInt($('modal-pessoas-input').value, 10);
+    const msgPessoas = $('modal-pessoas-msg');
+    const botaoPessoas = $('modal-pessoas-salvar');
+    botaoPessoas.disabled = true; botaoPessoas.textContent = 'Salvando…';
+    msgPessoas.textContent = '';
+    try {
+      const r = await chamar({ acao: 'pessoas', senha: senha, id: a.id, pessoas: pessoas });
+      if (!r.ok) { msgPessoas.textContent = r.erro; return; }
+      a.pessoas = r.pessoas;
+      abrirModal(a, etapa);
+      carregar();
+    } catch (err) {
+      msgPessoas.textContent = 'Não consegui salvar. Tente de novo.';
+    } finally {
+      botaoPessoas.disabled = false; botaoPessoas.textContent = 'Salvar';
     }
   });
   $('modal-criancas-editar').addEventListener('click', () => {
