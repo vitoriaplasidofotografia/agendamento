@@ -262,8 +262,8 @@ a.zap:hover{text-decoration:underline}
 
     <div id="view-lista">
       <div class="card">
-        <label for="busca-whatsapp">Buscar por WhatsApp</label>
-        <input type="text" id="busca-whatsapp" placeholder="Ex.: 51999999999" inputmode="numeric">
+        <label for="busca-whatsapp">Buscar por nome ou WhatsApp</label>
+        <input type="text" id="busca-whatsapp" placeholder="Ex.: Maria ou 51999999999">
       </div>
       <div id="lista"></div>
     </div>
@@ -767,9 +767,15 @@ function desenhar() {
   const lista = $('lista');
   lista.innerHTML = '';
   let listaVisivel = dados.filter((a) => a.status !== STATUS_CANC);
-  if (buscaWhatsapp) listaVisivel = listaVisivel.filter((a) => (a.whatsapp || '').replace(/\D/g, '').indexOf(buscaWhatsapp) !== -1);
+  if (buscaWhatsapp) {
+    const digitos = buscaWhatsapp.replace(/\D/g, '');
+    const texto = buscaWhatsapp.toLowerCase();
+    listaVisivel = listaVisivel.filter((a) =>
+      (a.nome || '').toLowerCase().includes(texto) || (digitos && (a.whatsapp || '').replace(/\D/g, '').indexOf(digitos) !== -1)
+    );
+  }
   if (!listaVisivel.length) {
-    lista.innerHTML = '<p class="vazio">' + (buscaWhatsapp ? 'Nenhum agendamento com esse WhatsApp.' : 'Nenhum agendamento neste período.') + '</p>';
+    lista.innerHTML = '<p class="vazio">' + (buscaWhatsapp ? 'Nenhum agendamento com esse nome ou WhatsApp.' : 'Nenhum agendamento neste período.') + '</p>';
     return;
   }
   let diaAtual = '';
@@ -1713,7 +1719,7 @@ $('de').addEventListener('change', carregar);
 $('ate').addEventListener('change', carregar);
 let buscaWhatsapp = '';
 $('busca-whatsapp').addEventListener('input', (e) => {
-  buscaWhatsapp = e.target.value.replace(/\D/g, '');
+  buscaWhatsapp = e.target.value.trim();
   desenhar();
 });
 function trocarAba(ativa) {
