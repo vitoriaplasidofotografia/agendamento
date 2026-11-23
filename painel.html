@@ -980,12 +980,13 @@ async function excluirExtratoSaida(it) {
 function desenharFinanceiro() {
   const lista = $('financeiro-lista');
   lista.innerHTML = '';
-  if (!dados.length) {
+  const ativos = dados.filter((a) => a.status !== STATUS_CANC);
+  if (!ativos.length) {
     lista.innerHTML = '<p class="vazio">Nenhum agendamento neste período.</p>';
     return;
   }
   let diaAtual = '';
-  dados.forEach((a) => {
+  ativos.forEach((a) => {
     if (a.data !== diaAtual) {
       diaAtual = a.data;
       const h = document.createElement('div'); h.className = 'dia';
