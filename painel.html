@@ -1092,7 +1092,15 @@ function abrirModal(a, etapa) {
   html += '<p id="modal-origem-msg" style="font-size:12px;color:var(--green);margin:4px 0 0"></p>';
   html += '<div class="modal-secao">Financeiro</div>';
   html += linhaModal('Pacote', a.pacote);
-  html += linhaModal('Lote da reserva', LOTE_NOMES[Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1)]);
+  html += '<div class="modal-linha"><span class="rot">Lote da reserva</span><span class="val">' + LOTE_NOMES[Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1)] + '<button class="btn-lapis" id="modal-lote-editar" type="button" title="Trocar o lote de preços (ex.: cobrar valores do 1º lote)">✏️</button></span></div>';
+  html += '<div class="edicao-sinal" id="modal-lote-edicao" hidden style="margin:2px 0 8px">';
+  html += '<select id="modal-lote-input">';
+  LOTE_NOMES.forEach((nomeLote, idx) => { html += '<option value="' + idx + '"' + ((a.lote || 0) === idx ? ' selected' : '') + '>' + nomeLote + '</option>'; });
+  html += '</select>';
+  html += '<button type="button" id="modal-lote-salvar">Salvar</button>';
+  html += '<button type="button" class="cancelar" id="modal-lote-cancelar">Cancelar</button>';
+  html += '</div>';
+  html += '<p id="modal-lote-msg" style="font-size:12px;color:var(--danger);margin:-6px 0 8px;text-align:right"></p>';
   html += linhaModal('Valor total', a.valor_txt);
   html += '<div class="modal-linha"><span class="rot">Sinal</span><span class="val">' + a.sinal_txt + ' (' + a.status + ')<button class="btn-lapis" id="modal-sinal-editar" type="button" title="Editar valor do sinal recebido">✏️</button></span></div>';
   html += '<div class="edicao-sinal" id="modal-sinal-edicao" hidden style="margin:2px 0 8px">';
@@ -1152,6 +1160,31 @@ function abrirModal(a, etapa) {
       msgSinal.textContent = 'Não consegui salvar. Tente de novo.';
     } finally {
       botaoSinal.disabled = false; botaoSinal.textContent = 'Salvar';
+    }
+  });
+  $('modal-lote-editar').addEventListener('click', () => {
+    $('modal-lote-edicao').hidden = false;
+    $('modal-lote-input').focus();
+  });
+  $('modal-lote-cancelar').addEventListener('click', () => { $('modal-lote-edicao').hidden = true; });
+  $('modal-lote-salvar').addEventListener('click', async () => {
+    const lote = parseInt($('modal-lote-input').value, 10);
+    const msgLote = $('modal-lote-msg');
+    const botaoLote = $('modal-lote-salvar');
+    botaoLote.disabled = true; botaoLote.textContent = 'Salvando…';
+    msgLote.textContent = '';
+    try {
+      const r = await chamar({ acao: 'lote', senha: senha, id: a.id, lote: lote });
+      if (!r.ok) { msgLote.textContent = r.erro; return; }
+      a.lote = r.lote;
+      a.valor_txt = r.valor_txt;
+      a.sinal_txt = r.sinal_txt;
+      abrirModal(a, etapa);
+      carregar();
+    } catch (err) {
+      msgLote.textContent = 'Não consegui salvar. Tente de novo.';
+    } finally {
+      botaoLote.disabled = false; botaoLote.textContent = 'Salvar';
     }
   });
   $('modal-origem').addEventListener('change', async (e) => {
