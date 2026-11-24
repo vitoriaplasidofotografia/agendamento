@@ -119,14 +119,14 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
       <b>Como baixar em alta qualidade</b>
       <p style="margin:10px 0 8px;color:var(--soft);font-size:14px">Primeiro, toque no aparelho que você está usando, pra ver o passo a passo certo:</p>
       <div class="pils">
-        <button type="button" class="pil on" id="pil-iphone">iPhone</button>
+        <button type="button" class="pil" id="pil-iphone">iPhone</button>
         <button type="button" class="pil" id="pil-android">Android</button>
         <button type="button" class="pil" id="pil-computador">Computador</button>
       </div>
 
-      <div class="passo"><span class="num">1</span><p>Toque no botão abaixo "Ver minhas fotos" pra abrir o álbum completo do seu ensaio no Google Fotos.</p></div>
+      <div class="passo" id="passo-abrir-album" hidden><span class="num">1</span><p>Toque no botão abaixo "Ver minhas fotos" pra abrir o álbum completo do seu ensaio no Google Fotos.</p></div>
 
-      <div class="passos-dispositivo on" id="dispositivo-iphone">
+      <div class="passos-dispositivo" id="dispositivo-iphone">
         <div class="passo"><span class="num">2</span><p>Toque nos três pontinhos no canto superior direito, depois em "Selecionar fotos" e selecione todas.</p></div>
         <div class="passo"><span class="num">3</span><p>Em seguida toque no botão de compartilhar (também no canto superior) e, lá embaixo, em "Salvar imagens" — assim todas vão direto pra galeria do seu iPhone.</p></div>
       </div>
@@ -184,14 +184,9 @@ PILS_DISPOSITIVO.forEach((d) => {
       $('pil-' + o).classList.toggle('on', o === d);
       $('dispositivo-' + o).classList.toggle('on', o === d);
     });
+    $('passo-abrir-album').hidden = false;
   });
 });
-/* abre direto na aba do dispositivo detectado */
-(function () {
-  const ua = navigator.userAgent || '';
-  const inicial = /iPhone|iPad|iPod/i.test(ua) ? 'iphone' : /Android/i.test(ua) ? 'android' : /Mobi/i.test(ua) ? 'android' : 'computador';
-  if (inicial !== 'iphone') $('pil-' + inicial).click();
-})();
 const API = 'https://script.google.com/macros/s/AKfycbwyPsHThAdTGlgQibJ7ZD1woOcF_W6LcFe-4L0pd5DFfmHUqrS4XFiZm8Oqcaq9YB7n/exec';
 
 async function apiPost(body) {
