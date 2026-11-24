@@ -105,6 +105,11 @@ a.zap:hover{text-decoration:underline}
 .custos .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500}
 .custos .numero{font-family:var(--disp);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .bloco-titulo{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:0 0 10px;font-weight:600}
+.tabela-lote{width:100%;border-collapse:collapse;font-size:13px}
+.tabela-lote th,.tabela-lote td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+.tabela-lote th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--soft);font-weight:600}
+.tabela-lote td{font-variant-numeric:tabular-nums;color:var(--ink)}
+.tabela-lote tr:last-child td{border-bottom:none}
 .grafico-pizza{display:flex;align-items:center;gap:26px;flex-wrap:wrap;justify-content:center;padding:6px 0}
 .pizza-circulo{width:160px;height:160px;border-radius:50%;flex:0 0 auto}
 .pizza-legenda{display:flex;flex-direction:column;gap:9px;font-size:13.5px}
@@ -279,8 +284,10 @@ a.zap:hover{text-decoration:underline}
         <div class="financas" id="financas-extras" style="margin-top:10px">
           <div class="fin"><div class="rotulo">Fotos extras · recebido</div><div class="numero" id="fin-extras-recebido">R$ 0,00</div></div>
           <div class="fin"><div class="rotulo">Fotos extras · a receber</div><div class="numero" id="fin-extras-receber">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Fotos extras · faturado (total)</div><div class="numero" id="fin-extras-fatura">R$ 0,00</div></div>
           <div class="fin"><div class="rotulo">Fotos impressas · recebido</div><div class="numero" id="fin-impressas-recebido">R$ 0,00</div></div>
           <div class="fin"><div class="rotulo">Fotos impressas · a receber</div><div class="numero" id="fin-impressas-receber">R$ 0,00</div></div>
+          <div class="fin fatura"><div class="rotulo">Fotos impressas · faturado (total)</div><div class="numero" id="fin-impressas-fatura">R$ 0,00</div></div>
         </div>
         <div class="custos" id="custos">
           <div class="fin custo"><div class="rotulo">Custo estimado dos produtos</div><div class="numero" id="fin-custo">R$ 0,00</div></div>
@@ -307,6 +314,10 @@ a.zap:hover{text-decoration:underline}
           <div class="fin"><div class="rotulo">Anúncio</div><div class="numero" id="fin-origem-anuncio">R$ 0,00</div></div>
           <div class="fin"><div class="rotulo">Não informado</div><div class="numero" id="fin-origem-vazio">R$ 0,00</div></div>
         </div>
+      </div>
+      <div class="card">
+        <div class="bloco-titulo">Faturamento por lote e pacote</div>
+        <div id="fin-lote-pacote-tabela"></div>
       </div>
       <div id="financeiro-lista"></div>
     </div>
@@ -720,8 +731,10 @@ function desenhar() {
   $('fin-fatura-com-negociacao').textContent = formatarReais(pago + saldo + totalNegociandoFin);
   $('fin-extras-recebido').textContent = formatarReais(extrasRecebido);
   $('fin-extras-receber').textContent = formatarReais(extrasAReceber);
+  $('fin-extras-fatura').textContent = formatarReais(extrasRecebido + extrasAReceber);
   $('fin-impressas-recebido').textContent = formatarReais(impressasRecebido);
   $('fin-impressas-receber').textContent = formatarReais(impressasAReceber);
+  $('fin-impressas-fatura').textContent = formatarReais(impressasRecebido + impressasAReceber);
   const custo = ativos.reduce((s, a) => s + custoDe(a), 0);
   const investimentoAnuncios = lerNum(CHAVE_ANUNCIOS_INVESTIMENTO, 0);
   const custoTotal = custo + investimentoAnuncios;
@@ -744,6 +757,32 @@ function desenhar() {
   $('fin-origem-organico').textContent = formatarReais(faturaPorOrigem['Orgânico']);
   $('fin-origem-anuncio').textContent = formatarReais(faturaPorOrigem['Anúncio']);
   $('fin-origem-vazio').textContent = formatarReais(faturaPorOrigem['']);
+
+  const pacotesLista = Object.keys(CUSTO_PACOTE);
+  const matrizLote = LOTE_NOMES.map(() => {
+    const linha = {};
+    pacotesLista.forEach((p) => { linha[p] = { qtd: 0, valor: 0 }; });
+    return linha;
+  });
+  ativos.forEach((a) => {
+    const idxLote = Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1);
+    if (!matrizLote[idxLote][a.pacote]) matrizLote[idxLote][a.pacote] = { qtd: 0, valor: 0 };
+    matrizLote[idxLote][a.pacote].qtd += 1;
+    matrizLote[idxLote][a.pacote].valor += lerReais(a.valor_txt);
+  });
+  let tabelaLoteHtml = '<table class="tabela-lote"><thead><tr><th>Lote</th>' + pacotesLista.map((p) => '<th>' + p + '</th>').join('') + '<th>Total</th></tr></thead><tbody>';
+  LOTE_NOMES.forEach((nome, idx) => {
+    let totalQtd = 0, totalValor = 0;
+    tabelaLoteHtml += '<tr><td>' + nome + '</td>';
+    pacotesLista.forEach((p) => {
+      const c = matrizLote[idx][p] || { qtd: 0, valor: 0 };
+      totalQtd += c.qtd; totalValor += c.valor;
+      tabelaLoteHtml += '<td>' + c.qtd + ' · ' + formatarReais(c.valor) + '</td>';
+    });
+    tabelaLoteHtml += '<td><b>' + totalQtd + ' · ' + formatarReais(totalValor) + '</b></td></tr>';
+  });
+  tabelaLoteHtml += '</tbody></table>';
+  $('fin-lote-pacote-tabela').innerHTML = tabelaLoteHtml;
 
   const aguard = dados.filter((a) => a.status === STATUS_AGUARDA).length;
   const ok = dados.filter((a) => a.status === STATUS_OK).length;
