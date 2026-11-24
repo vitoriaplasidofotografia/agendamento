@@ -127,8 +127,11 @@ a.zap:hover{text-decoration:underline}
 .tag.custo{color:var(--red);background:var(--red-soft)}
 .tag.prazo-digital{color:var(--blue);background:var(--blue-soft)}
 .tag.prazo-fisico{color:var(--purple);background:var(--purple-soft)}
-.abas{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
-.abas::-webkit-scrollbar{display:none}
+.abas{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px}
+.abas::-webkit-scrollbar{height:6px}
+.abas::-webkit-scrollbar-track{background:transparent}
+.abas::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.abas::-webkit-scrollbar-thumb:hover{background:var(--soft)}
 .aba{appearance:none;border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:var(--raio-p);padding:8px 16px;font-family:var(--sans);font-weight:500;font-size:13px;cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .aba:hover{background:var(--bg2)}
 .aba.ativa{background:var(--blue);color:#fff;border-color:var(--blue)}
