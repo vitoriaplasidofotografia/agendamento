@@ -322,6 +322,16 @@ a.zap:hover{text-decoration:underline}
         <div class="bloco-titulo">Faturamento por lote e pacote</div>
         <div id="fin-lote-pacote-tabela"></div>
       </div>
+      <div class="card">
+        <div class="bloco-titulo">Fluxo de caixa por mês</div>
+        <div class="financas">
+          <div class="fin pago"><div class="rotulo">Recebido em novembro</div><div class="numero" id="fin-mes-nov-recebido">R$ 0,00</div></div>
+          <div class="fin saldo"><div class="rotulo">Ainda a receber em novembro</div><div class="numero" id="fin-mes-nov-receber">R$ 0,00</div></div>
+          <div class="fin pago"><div class="rotulo">Recebido em dezembro</div><div class="numero" id="fin-mes-dez-recebido">R$ 0,00</div></div>
+          <div class="fin saldo"><div class="rotulo">Ainda a receber em dezembro</div><div class="numero" id="fin-mes-dez-receber">R$ 0,00</div></div>
+        </div>
+        <p class="atualiza" style="text-align:left;margin:8px 0 0">Sinal contado pelo mês em que o agendamento foi feito (é quando normalmente é pago). Restante + fotos extras + fotos impressas contados pelo mês da sessão (pagos no dia).</p>
+      </div>
       <div id="financeiro-lista"></div>
     </div>
 
@@ -786,6 +796,34 @@ function desenhar() {
   });
   tabelaLoteHtml += '</tbody></table>';
   $('fin-lote-pacote-tabela').innerHTML = tabelaLoteHtml;
+
+  let sinalRecebidoNov = 0, sinalPendenteNov = 0, sinalRecebidoDez = 0, sinalPendenteDez = 0;
+  ativos.forEach((a) => {
+    const criadoMes = a.criado_em.indexOf('Nov') !== -1 ? 'nov' : a.criado_em.indexOf('Dec') !== -1 ? 'dez' : '';
+    const sinal = lerReais(a.sinal_txt);
+    if (a.status === STATUS_OK) {
+      if (criadoMes === 'nov') sinalRecebidoNov += sinal;
+      if (criadoMes === 'dez') sinalRecebidoDez += sinal;
+    } else if (a.status === STATUS_AGUARDA) {
+      if (criadoMes === 'nov') sinalPendenteNov += sinal;
+      if (criadoMes === 'dez') sinalPendenteDez += sinal;
+    }
+  });
+  let saldoRecebidoNov = 0, saldoAReceberNov = 0, saldoRecebidoDez = 0, saldoAReceberDez = 0;
+  ativos.forEach((a) => {
+    const mesSessao = a.data.slice(5, 7) === '11' ? 'nov' : a.data.slice(5, 7) === '12' ? 'dez' : '';
+    const restante = lerReais(a.valor_txt) - lerReais(a.sinal_txt);
+    const extras = extrasValorDe(a);
+    const impressas = impressasValorDe(a);
+    const recebido = (a.saldo_pago ? restante : 0) + (a.extras_pago ? extras : 0) + (a.fotos_impressas_pago ? impressas : 0);
+    const aReceber = (a.saldo_pago ? 0 : restante) + (a.extras_pago ? 0 : extras) + (a.fotos_impressas_pago ? 0 : impressas);
+    if (mesSessao === 'nov') { saldoRecebidoNov += recebido; saldoAReceberNov += aReceber; }
+    if (mesSessao === 'dez') { saldoRecebidoDez += recebido; saldoAReceberDez += aReceber; }
+  });
+  $('fin-mes-nov-recebido').textContent = formatarReais(sinalRecebidoNov + saldoRecebidoNov);
+  $('fin-mes-nov-receber').textContent = formatarReais(sinalPendenteNov + saldoAReceberNov);
+  $('fin-mes-dez-recebido').textContent = formatarReais(sinalRecebidoDez + saldoRecebidoDez);
+  $('fin-mes-dez-receber').textContent = formatarReais(sinalPendenteDez + saldoAReceberDez);
 
   const aguard = dados.filter((a) => a.status === STATUS_AGUARDA).length;
   const ok = dados.filter((a) => a.status === STATUS_OK).length;
