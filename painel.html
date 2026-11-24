@@ -105,6 +105,9 @@ a.zap:hover{text-decoration:underline}
 .custos .rotulo{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500}
 .custos .numero{font-family:var(--disp);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .bloco-titulo{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:0 0 10px;font-weight:600}
+.filtros-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.filtros-lista label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;font-weight:500;display:block;margin-bottom:4px}
+.filtros-lista select{width:100%;border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:var(--raio-p);padding:9px 10px;font-family:var(--sans);font-size:13px}
 .tabela-lote{width:100%;border-collapse:collapse;font-size:13px}
 .tabela-lote th,.tabela-lote td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
 .tabela-lote th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--soft);font-weight:600}
@@ -272,6 +275,25 @@ a.zap:hover{text-decoration:underline}
       <div class="card">
         <label for="busca-whatsapp">Buscar por nome ou WhatsApp</label>
         <input type="text" id="busca-whatsapp" placeholder="Ex.: Maria ou 51999999999">
+        <div class="filtros-lista">
+          <div>
+            <label for="filtro-origem">Origem</label>
+            <select id="filtro-origem"><option value="">Todas</option></select>
+          </div>
+          <div>
+            <label for="filtro-pacote">Pacote</label>
+            <select id="filtro-pacote"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <label for="filtro-cenario">Cenário</label>
+            <select id="filtro-cenario"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <label for="filtro-status">Status</label>
+            <select id="filtro-status"><option value="">Todos</option></select>
+          </div>
+        </div>
+        <button class="btn ghost" id="filtro-limpar" type="button" style="margin-top:10px;width:auto;padding:8px 16px">Limpar filtros</button>
       </div>
       <div id="lista"></div>
     </div>
@@ -523,6 +545,7 @@ const STATUS_AGUARDA = 'aguardando sinal';
 const STATUS_OK = 'sinal confirmado';
 const STATUS_CANC = 'cancelado';
 const ORIGENS = ['Indicação', 'Orgânico', 'Anúncio'];
+const CENARIOS = ['Encanto', 'Tradição'];
 
 function lerReais(txt) {
   if (!txt) return 0;
@@ -854,8 +877,21 @@ function desenhar() {
       (a.nome || '').toLowerCase().includes(texto) || (digitos && (a.whatsapp || '').replace(/\D/g, '').indexOf(digitos) !== -1)
     );
   }
+  if (filtroOrigem) {
+    listaVisivel = listaVisivel.filter((a) => filtroOrigem === 'none' ? !a.origem : a.origem === filtroOrigem);
+  }
+  if (filtroPacote) {
+    listaVisivel = listaVisivel.filter((a) => a.pacote === filtroPacote);
+  }
+  if (filtroCenario) {
+    listaVisivel = listaVisivel.filter((a) => a.cenario === filtroCenario);
+  }
+  if (filtroStatus) {
+    listaVisivel = listaVisivel.filter((a) => a.status === filtroStatus);
+  }
+  const algumFiltro = buscaWhatsapp || filtroOrigem || filtroPacote || filtroCenario || filtroStatus;
   if (!listaVisivel.length) {
-    lista.innerHTML = '<p class="vazio">' + (buscaWhatsapp ? 'Nenhum agendamento com esse nome ou WhatsApp.' : 'Nenhum agendamento neste período.') + '</p>';
+    lista.innerHTML = '<p class="vazio">' + (algumFiltro ? 'Nenhum agendamento com esses filtros.' : 'Nenhum agendamento neste período.') + '</p>';
     return;
   }
   let diaAtual = '';
@@ -1801,6 +1837,23 @@ $('ate').addEventListener('change', carregar);
 let buscaWhatsapp = '';
 $('busca-whatsapp').addEventListener('input', (e) => {
   buscaWhatsapp = e.target.value.trim();
+  desenhar();
+});
+let filtroOrigem = '', filtroPacote = '', filtroCenario = '', filtroStatus = '';
+ORIGENS.forEach((o) => { $('filtro-origem').innerHTML += '<option value="' + o + '">' + o + '</option>'; });
+$('filtro-origem').innerHTML += '<option value="none">Não informado</option>';
+Object.keys(CUSTO_PACOTE).forEach((p) => { $('filtro-pacote').innerHTML += '<option value="' + p + '">' + p + '</option>'; });
+CENARIOS.forEach((c) => { $('filtro-cenario').innerHTML += '<option value="' + c + '">' + c + '</option>'; });
+$('filtro-status').innerHTML += '<option value="' + STATUS_AGUARDA + '">Aguardando sinal</option><option value="' + STATUS_OK + '">Sinal confirmado</option>';
+$('filtro-origem').addEventListener('change', (e) => { filtroOrigem = e.target.value; desenhar(); });
+$('filtro-pacote').addEventListener('change', (e) => { filtroPacote = e.target.value; desenhar(); });
+$('filtro-cenario').addEventListener('change', (e) => { filtroCenario = e.target.value; desenhar(); });
+$('filtro-status').addEventListener('change', (e) => { filtroStatus = e.target.value; desenhar(); });
+$('filtro-limpar').addEventListener('click', () => {
+  filtroOrigem = filtroPacote = filtroCenario = filtroStatus = '';
+  buscaWhatsapp = '';
+  $('filtro-origem').value = ''; $('filtro-pacote').value = ''; $('filtro-cenario').value = ''; $('filtro-status').value = '';
+  $('busca-whatsapp').value = '';
   desenhar();
 });
 function trocarAba(ativa) {
