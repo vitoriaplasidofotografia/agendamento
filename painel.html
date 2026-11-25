@@ -1239,6 +1239,7 @@ function abrirModal(a, etapa) {
   ORIGENS.forEach((o) => { html += '<option value="' + o + '"' + (a.origem === o ? ' selected' : '') + '>' + o + '</option>'; });
   html += '</select></span></div>';
   html += '<p id="modal-origem-msg" style="font-size:12px;color:var(--green);margin:4px 0 0"></p>';
+  html += linhaModal('Autoriza uso de imagem', a.autoriza_imagem === true ? 'Sim' : a.autoriza_imagem === false ? 'Não' : 'Não perguntado (agendamento normal do site)');
   html += '<div class="modal-secao">Financeiro</div>';
   html += linhaModal('Pacote', a.pacote);
   html += '<div class="modal-linha"><span class="rot">Lote da reserva</span><span class="val">' + LOTE_NOMES[Math.min(Math.max(a.lote || 0, 0), LOTE_NOMES.length - 1)] + '<button class="btn-lapis" id="modal-lote-editar" type="button" title="Trocar o lote de preços (ex.: cobrar valores do 1º lote)">✏️</button></span></div>';
