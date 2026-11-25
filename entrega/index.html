@@ -84,6 +84,14 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
 .aviso-filtro .aviso-icone{font-size:26px;display:block;margin-bottom:4px}
 .aviso-filtro b{display:block;color:var(--danger);font-size:16px;margin-bottom:6px}
 .aviso-filtro p{margin:0;font-size:14px;color:var(--ink);line-height:1.5}
+.acordeao{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.acordeao-pergunta{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;text-align:left;padding:14px 16px;font-family:var(--sans);font-weight:500;font-size:14.5px;color:var(--ink);cursor:pointer}
+.acordeao-seta{flex:0 0 auto;font-size:20px;color:var(--gold);transition:transform .2s ease}
+.acordeao.on .acordeao-seta{transform:rotate(90deg)}
+.acordeao-resposta{max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 16px}
+.acordeao.on .acordeao-resposta{max-height:420px;padding:0 16px 16px}
+.acordeao-resposta p{margin:0 0 10px;font-size:13.5px;color:var(--soft);line-height:1.5}
+.acordeao-resposta p:last-child{margin-bottom:0}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -180,6 +188,20 @@ input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
     <a class="btn btn-album" id="link-album" href="#" target="_blank" rel="noopener" style="margin-top:18px">Ver minhas fotos</a>
     <p class="sem-album" id="sem-album" hidden>O álbum ainda está sendo preparado com todo cuidado — avisaremos pelo WhatsApp assim que estiver pronto. 💛</p>
 
+    <div class="acordeao">
+      <button type="button" class="acordeao-pergunta" id="acordeao-insta-btn">
+        <span>Como faço para postar minhas fotos em alta qualidade no Instagram?</span>
+        <span class="acordeao-seta">›</span>
+      </button>
+      <div class="acordeao-resposta" id="acordeao-insta-resposta">
+        <p>1. Primeiro, baixe a foto em alta qualidade na galeria do seu celular (veja o passo a passo acima, de acordo com o seu aparelho).</p>
+        <p>2. Abra o Instagram e comece um novo story ou publicação.</p>
+        <p>3. Escolha a foto direto da sua galeria (não tire print da tela nem reenvie pelo WhatsApp, porque isso perde qualidade).</p>
+        <p>4. Não aplique nenhum filtro nem ajuste de cor, brilho ou nitidez — poste a foto exatamente como ela chegou até você, pra manter a edição profissional feita na sessão.</p>
+        <p>5. Marque <b>@vitoriaplasidofotografia</b> no story pra eu poder repostar! 💛</p>
+      </div>
+    </div>
+
     <button class="logout" id="btn-sair">Sair</button>
   </section>
 </div>
@@ -246,6 +268,10 @@ async function entrar() {
 
 $('btn-entrar').addEventListener('click', entrar);
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+$('acordeao-insta-btn').addEventListener('click', () => {
+  $('acordeao-insta-btn').closest('.acordeao').classList.toggle('on');
+});
+
 $('btn-sair').addEventListener('click', () => {
   try { localStorage.removeItem('vitoria_email'); localStorage.removeItem('vitoria_senha'); } catch (e) {}
   $('passo-entrega').hidden = true;
