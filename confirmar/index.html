@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Confirmar agendamento · Vitória Plasido Fotografia</title>
+<link rel="icon" type="image/png" href="../img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap">
+<style>
+:root{
+  --cream:#F4EDE4; --paper:#FBF7F1; --line:#E2D5C3;
+  --gold:#B08A4F; --gold-soft:#C9A76F;
+  --moss:#5E7262; --moss-deep:#3F5145;
+  --ink:#33402F; --soft:#5D6656; --danger:#9E1B1F;
+  --script:"Great Vibes","Brush Script MT",cursive;
+  --serif:"Cormorant Garamond",Garamond,"Times New Roman",serif;
+  --sans:"Jost","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);font-weight:300;font-size:16px;line-height:1.5}
+button,input{font:inherit}
+.wrap{max-width:460px;margin:0 auto;padding:24px 18px 48px}
+header{text-align:center;margin-bottom:18px}
+header img{width:min(70%,240px);height:auto}
+h1{font-family:var(--script);font-weight:400;color:var(--gold);font-size:46px;line-height:1;margin:10px 0 4px}
+.sub{font-family:var(--serif);font-style:italic;color:var(--soft);font-size:18px;margin:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px;box-shadow:0 10px 26px rgba(51,64,47,.06)}
+.back{appearance:none;border:0;background:none;color:var(--gold);font-size:14px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:6px 0;margin-bottom:4px}
+h2{font-family:var(--serif);font-weight:600;font-size:26px;margin:4px 0 8px}
+label{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px}
+input[type=text],input[type=tel],input[type=email],select{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:13px 14px;color:var(--ink)}
+input:focus{outline:2px solid var(--gold-soft);outline-offset:1px}
+.btn{display:block;width:100%;text-align:center;border:0;background:var(--moss);color:#fff;border-radius:999px;padding:15px 18px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:18px;text-decoration:none}
+.btn:hover{background:var(--moss-deep)}
+.btn.ghost{background:transparent;color:var(--moss);border:1px solid var(--moss)}
+.btn:disabled{opacity:.6;cursor:default}
+.erro{color:var(--danger);font-size:14px;margin-top:10px;min-height:1em}
+.resumo{font-family:var(--serif);font-size:20px;margin:0}
+.resumo b{font-weight:600}
+.resumo small{display:block;font-family:var(--sans);font-size:14px;color:var(--soft);margin-top:4px}
+.pix{background:#fff;border:1px dashed var(--gold-soft);border-radius:12px;padding:16px;margin-top:14px;text-align:center}
+.pix small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.pix code{display:block;font-family:var(--sans);font-size:17px;word-break:break-all;margin:8px 0;color:var(--ink)}
+.valor-grande{font-family:var(--serif);font-size:30px;font-weight:600;color:var(--moss-deep)}
+.totais{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--soft);margin-top:12px}
+ol.passos{padding-left:20px;margin:12px 0 0;color:var(--soft)}
+ol.passos li{margin:6px 0}
+.ok{font-size:14px;color:var(--moss-deep);margin-top:10px;text-align:center}
+.politica{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;font-size:14px;color:var(--soft)}
+.politica b{color:var(--ink);font-weight:500}
+.politica ul{margin:8px 0 12px;padding-left:18px}
+.politica li{margin:4px 0}
+label.aceite{display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:0;cursor:pointer}
+label.aceite input{margin-top:3px}
+.politica-pix{font-size:13px;color:var(--soft);margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.carregando{text-align:center;color:var(--soft);padding:20px 0;font-family:var(--serif);font-style:italic}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="../img/logo-crop.png" alt="Vitória Plasido Fotografia">
+    <h1>Confirmar sessão</h1>
+    <p class="sub">Revise os dados combinados e finalize sua reserva.</p>
+  </header>
+
+  <section class="card" id="passo-carregando">
+    <p class="carregando">Carregando os dados do seu agendamento…</p>
+  </section>
+
+  <section class="card" id="passo-erro" hidden>
+    <h2>Ops!</h2>
+    <p class="sub" id="texto-erro" style="font-style:normal;font-size:15px"></p>
+  </section>
+
+  <!-- dados -->
+  <section class="card" id="passo-dados" hidden>
+    <h2>Seus dados</h2>
+    <p class="resumo" id="resumo"></p>
+    <div class="politica" id="aviso-entrega" style="border-color:var(--danger)" hidden>
+      <b>Atenção aos prazos de dezembro</b>
+      <p style="margin:8px 0 0">Para sessões agendadas entre os dias 10 e 19 de dezembro, não conseguimos nos responsabilizar pela entrega das mídias físicas (fotos impressas, ímã, bolinha de Natal) antes do dia 25 de dezembro, por conta do alto volume dessa época. As mídias digitais serão entregues normalmente, sem atraso.</p>
+    </div>
+    <form id="form">
+      <label for="nome">Nome completo</label>
+      <input type="text" id="nome" autocomplete="name" required>
+      <label for="whatsapp">WhatsApp com DDD</label>
+      <input type="tel" id="whatsapp" placeholder="(51) 99999-9999" autocomplete="tel" required>
+      <label for="email">E-mail para receber as fotos</label>
+      <input type="email" id="email" placeholder="seuemail@exemplo.com" autocomplete="email" required>
+      <label for="nome-criancas">Nome e idade das crianças (se houver)</label>
+      <input type="text" id="nome-criancas" placeholder="Ex.: Sofia (5 anos) e Miguel (3 anos)">
+      <label for="pessoas">Quantas pessoas serão fotografadas?</label>
+      <select id="pessoas" required>
+        <option value="">Selecione</option>
+        <option value="1">1 pessoa</option>
+        <option value="2">2 pessoas</option>
+        <option value="3">3 pessoas</option>
+        <option value="4">4 pessoas</option>
+      </select>
+      <div class="politica">
+        <b>Política de cancelamento e reagendamento</b>
+        <ul>
+          <li>O sinal de 30% <b>não é reembolsável</b> em caso de cancelamento ou não comparecimento.</li>
+          <li>Reagendamentos devem ser solicitados com <b>no mínimo 48 horas</b> de antecedência, sujeitos à disponibilidade de agenda.</li>
+        </ul>
+        <label class="aceite"><input type="checkbox" id="aceite" required> Li e concordo com a política de cancelamento e reagendamento.</label>
+      </div>
+      <div class="politica">
+        <b>Autorização de uso de imagem</b>
+        <p style="margin:8px 0 12px">As fotos da sessão poderão ser usadas pela Vitória Plasido Fotografia para divulgação do seu trabalho, incluindo redes sociais e anúncios.</p>
+        <label class="aceite"><input type="checkbox" id="autoriza-imagem" required> Autorizo o uso das fotografias da sessão para divulgação nas redes sociais e nos anúncios da Vitória Plasido Fotografia.</label>
+      </div>
+      <button class="btn" id="btn-reservar" type="submit">Confirmar agendamento</button>
+      <p class="erro" id="erro-dados"></p>
+    </form>
+  </section>
+
+  <!-- pagamento do sinal -->
+  <section class="card" id="passo-pix" hidden>
+    <h2>Quase lá!</h2>
+    <p class="resumo" id="resumo-final"></p>
+    <div class="politica" id="aviso-entrega-pix" style="border-color:var(--danger)" hidden>
+      <b>Atenção aos prazos de dezembro</b>
+      <p style="margin:8px 0 0">Sua sessão caiu entre 10 e 19 de dezembro: não conseguimos nos responsabilizar pela entrega das mídias físicas antes do dia 25 de dezembro, por conta do alto volume dessa época. As mídias digitais serão entregues normalmente, sem atraso.</p>
+    </div>
+    <div class="totais">
+      <span>Pacote <b id="pix-pacote"></b></span>
+      <span id="pix-valor-pacote"></span>
+    </div>
+    <div class="pix">
+      <small>Valor do sinal (30%)</small>
+      <div class="valor-grande" id="pix-sinal"></div>
+    </div>
+    <div class="pix">
+      <small>Chave Pix</small>
+      <code id="chave-pix"></code>
+      <button class="btn ghost" id="copiar" type="button">Copiar chave Pix</button>
+      <p class="ok" id="copiado" hidden>Chave copiada!</p>
+    </div>
+    <ol class="passos">
+      <li>Pague o sinal de 30% pelo Pix.</li>
+      <li>Envie o comprovante no WhatsApp da Vitória, pelo botão abaixo.</li>
+      <li>Ela confirma o seu horário por lá.</li>
+    </ol>
+    <p class="politica-pix"><b>Lembrete:</b> o sinal de 30% não é reembolsável em caso de cancelamento ou não comparecimento. Reagendamentos devem ser pedidos com no mínimo 48 horas de antecedência, sujeitos à disponibilidade.</p>
+    <a class="btn" id="btn-comprovante" target="_blank" rel="noopener">Enviar comprovante no WhatsApp</a>
+  </section>
+</div>
+
+<script>
+/* URL do app da web publicada no Apps Script (ver Agenda.gs) */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwyPsHThAdTGlgQibJ7ZD1woOcF_W6LcFe-4L0pd5DFfmHUqrS4XFiZm8Oqcaq9YB7n/exec';
+let whatsappVitoria = '5551992560335';
+
+const $ = (id) => document.getElementById(id);
+
+async function api(params) {
+  const r = await fetch(API_URL + '?' + new URLSearchParams(params));
+  return r.json();
+}
+async function apiPost(corpo) {
+  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(corpo) });
+  return r.json();
+}
+
+// sessões agendadas nesse intervalo recebem o aviso de que a mídia física pode não chegar antes do dia 25/12
+const AVISO_ENTREGA_DE = '2026-12-10';
+const AVISO_ENTREGA_ATE = '2026-12-19';
+function precisaAvisoEntrega(s) { return s >= AVISO_ENTREGA_DE && s <= AVISO_ENTREGA_ATE; }
+
+function textoData(s) {
+  return new Date(s + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+}
+
+function mostrarErro(msg) {
+  $('passo-carregando').hidden = true;
+  $('passo-erro').hidden = false;
+  $('texto-erro').textContent = msg;
+}
+
+const params = new URLSearchParams(location.search);
+const escolha = {
+  data: params.get('data') || '',
+  hora: params.get('hora') || '',
+  cenario: params.get('cenario') || '',
+  pacoteNome: params.get('pacote') || '',
+  pacote: null,
+};
+
+(async function iniciar() {
+  if (!escolha.data || !escolha.hora || !escolha.pacoteNome || !escolha.cenario) {
+    mostrarErro('Esse link está incompleto. Peça pra Vitória gerar o link de novo.');
+    return;
+  }
+  try {
+    const [r, cfgData] = await Promise.all([
+      api({ acao: 'horarios', data: escolha.data }),
+      api({ acao: 'config', data: escolha.data }),
+    ]);
+    if (!r.ok || r.horarios.indexOf(escolha.hora) === -1) {
+      mostrarErro('Esse horário não está mais disponível. Fale com a Vitória pra combinar outro.');
+      return;
+    }
+    if (!cfgData.ok) {
+      mostrarErro('Não consegui carregar os dados agora. Tente de novo em instantes.');
+      return;
+    }
+    whatsappVitoria = cfgData.whatsapp || whatsappVitoria;
+    const pacote = (cfgData.pacotes || []).filter((p) => p.nome === escolha.pacoteNome)[0];
+    if (!pacote) {
+      mostrarErro('Esse link está incompleto. Peça pra Vitória gerar o link de novo.');
+      return;
+    }
+    escolha.pacote = pacote;
+    $('resumo').innerHTML = '';
+    const b = document.createElement('b'); b.textContent = textoData(escolha.data) + ' às ' + escolha.hora;
+    const s = document.createElement('small');
+    s.textContent = 'Pacote ' + pacote.nome + ' · cenário ' + escolha.cenario + ' · ' + pacote.valor_txt + ' · sinal 30%: ' + pacote.sinal_txt;
+    $('resumo').appendChild(b); $('resumo').appendChild(s);
+    if (pacote.desconto_semana) {
+      const d = document.createElement('small');
+      d.style.color = 'var(--moss-deep)'; d.style.fontWeight = '500';
+      d.textContent = '✓ 10% de desconto aplicado (sessão em dia de semana)';
+      $('resumo').appendChild(d);
+    }
+    $('aviso-entrega').hidden = !precisaAvisoEntrega(escolha.data);
+    $('passo-carregando').hidden = true;
+    $('passo-dados').hidden = false;
+  } catch (e) {
+    mostrarErro('Não consegui carregar os dados agora. Tente de novo em instantes.');
+  }
+})();
+
+$('form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = $('btn-reservar');
+  btn.disabled = true; btn.textContent = 'Reservando…';
+  $('erro-dados').textContent = '';
+  try {
+    const r = await apiPost({
+      acao: 'reservar',
+      aceite: $('aceite').checked,
+      autoriza_imagem: $('autoriza-imagem').checked,
+      pacote: escolha.pacote.nome,
+      cenario: escolha.cenario,
+      nome: $('nome').value,
+      whatsapp: $('whatsapp').value,
+      email: $('email').value,
+      nome_criancas: $('nome-criancas').value,
+      pessoas: $('pessoas').value,
+      data: escolha.data,
+      inicio: escolha.hora,
+    });
+    if (!r.ok) {
+      $('erro-dados').textContent = r.erro;
+      return;
+    }
+    mostrarPix(r);
+  } catch (e) {
+    $('erro-dados').textContent = 'Falha de conexão. Tente de novo.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+  }
+});
+
+function mostrarPix(r) {
+  $('passo-dados').hidden = true;
+  $('resumo-final').innerHTML = '';
+  const b = document.createElement('b'); b.textContent = textoData(r.data) + ' às ' + r.inicio;
+  $('resumo-final').appendChild(b);
+  $('pix-pacote').textContent = r.pacote;
+  $('pix-valor-pacote').textContent = 'Valor: ' + r.valor_txt;
+  $('pix-sinal').textContent = r.sinal_txt;
+  $('chave-pix').textContent = r.chave_pix;
+  $('aviso-entrega-pix').hidden = !precisaAvisoEntrega(r.data);
+  const msg = 'Olá, Vitória! Segue o comprovante do sinal (30%) do pacote ' + r.pacote +
+    ', sessão de ' + textoData(r.data) + ' às ' + r.inicio + ' (código ' + r.id + '). Nome: ' + $('nome').value + '.';
+  $('btn-comprovante').href = 'https://wa.me/' + (r.whatsapp || whatsappVitoria) + '?text=' + encodeURIComponent(msg);
+  $('passo-pix').hidden = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('copiar').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('chave-pix').textContent);
+    $('copiado').hidden = false;
+    setTimeout(() => { $('copiado').hidden = true; }, 2500);
+  } catch (e) {
+    $('copiado').textContent = 'Selecione a chave e copie manualmente.';
+    $('copiado').hidden = false;
+  }
+});
+</script>
+</body>
+</html>
