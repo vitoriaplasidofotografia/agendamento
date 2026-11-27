@@ -1514,11 +1514,20 @@ $('modal-fundo').addEventListener('click', (e) => { if (e.target.id === 'modal-f
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
 
 async function moverEtapa(a, novaEtapa) {
+  const etapaAnterior = a.etapa || 1;
+  const etapaEmAnterior = a.etapa_em;
+  // atualiza na hora, sem esperar o servidor, pra não travar o arrastar
+  a.etapa = novaEtapa;
+  a.etapa_em = iso(new Date());
+  desenharKanban();
   try {
     const r = await chamar({ acao: 'etapa', senha: senha, id: a.id, etapa: novaEtapa });
-    if (!r.ok) { $('erro-painel').textContent = r.erro; return; }
-    await carregar();
+    if (!r.ok) {
+      a.etapa = etapaAnterior; a.etapa_em = etapaEmAnterior; desenharKanban();
+      $('erro-painel').textContent = r.erro;
+    }
   } catch (e) {
+    a.etapa = etapaAnterior; a.etapa_em = etapaEmAnterior; desenharKanban();
     $('erro-painel').textContent = 'Não consegui mover. Tente de novo.';
   }
 }
