@@ -139,7 +139,8 @@ a.zap:hover{text-decoration:underline}
 .aba:hover{background:var(--bg2)}
 .aba.ativa{background:var(--blue);color:#fff;border-color:var(--blue)}
 #view-kanban{max-width:none;width:100vw;margin-left:calc(50% - 50vw);padding:0 24px;box-sizing:border-box}
-.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:230px;gap:8px;margin-top:14px;align-items:start;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px;scrollbar-width:thin}
+.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:230px;gap:8px;margin-top:14px;align-items:start;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px;scrollbar-width:thin;cursor:grab;user-select:none}
+.kanban.arrastando-board{cursor:grabbing}
 .kanban::-webkit-scrollbar{height:8px}
 .kanban::-webkit-scrollbar-track{background:transparent}
 .kanban::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
@@ -1873,6 +1874,25 @@ $('filtro-limpar').addEventListener('click', () => {
   $('busca-whatsapp').value = '';
   desenhar();
 });
+/* arrastar o Kanban pros lados clicando e puxando no fundo (fora de cards/cabeçalhos), igual Trello */
+(function () {
+  const board = $('kanban');
+  let arrastando = false, inicioX = 0, scrollInicio = 0, moveu = false;
+  board.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.kcard') || e.target.closest('.coluna-cabeca')) return;
+    arrastando = true; moveu = false;
+    inicioX = e.pageX; scrollInicio = board.scrollLeft;
+    board.classList.add('arrastando-board');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!arrastando) return;
+    const dx = e.pageX - inicioX;
+    if (Math.abs(dx) > 3) moveu = true;
+    board.scrollLeft = scrollInicio - dx;
+  });
+  window.addEventListener('mouseup', () => { arrastando = false; board.classList.remove('arrastando-board'); });
+  board.addEventListener('click', (e) => { if (moveu) { e.stopPropagation(); moveu = false; } }, true);
+})();
 function trocarAba(ativa) {
   const abas = { lista: 'aba-lista', financeiro: 'aba-financeiro', meta: 'aba-meta', kanban: 'aba-kanban', negociacao: 'aba-negociacao', anuncios: 'aba-anuncios', calendario: 'aba-calendario', relatorio: 'aba-relatorio', extrato: 'aba-extrato' };
   const views = { lista: 'view-lista', financeiro: 'view-financeiro', meta: 'view-meta', kanban: 'view-kanban', negociacao: 'view-negociacao', anuncios: 'view-anuncios', calendario: 'view-calendario', relatorio: 'view-relatorio', extrato: 'view-extrato' };
