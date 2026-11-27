@@ -28,6 +28,8 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:400;font-size:15px;line-height:1.5}
 button,input,select{font:inherit}
 .wrap{max-width:720px;margin:0 auto;padding:22px 16px 48px}
+.wrap.kanban-aberto{max-width:none}
+.wrap.kanban-aberto .card,.wrap.kanban-aberto header,.wrap.kanban-aberto .abas{max-width:720px;margin-left:auto;margin-right:auto}
 header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 h1{font-family:var(--disp);font-weight:600;font-size:22px;margin:0;color:var(--ink)}
 .sair{appearance:none;border:0;background:none;color:var(--soft);text-decoration:underline;cursor:pointer;font-size:14px}
@@ -138,8 +140,8 @@ a.zap:hover{text-decoration:underline}
 .aba{appearance:none;border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:var(--raio-p);padding:8px 16px;font-family:var(--sans);font-weight:500;font-size:13px;cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .aba:hover{background:var(--bg2)}
 .aba.ativa{background:var(--blue);color:#fff;border-color:var(--blue)}
-#view-kanban{max-width:none;width:100vw;margin-left:calc(50% - 50vw);padding:0 24px;box-sizing:border-box}
-.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:230px;gap:8px;margin-top:14px;align-items:start;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px;scrollbar-width:thin;cursor:grab;user-select:none}
+#view-kanban{width:100%;box-sizing:border-box}
+.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:230px;gap:8px;margin-top:14px;align-items:start;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px;scrollbar-width:thin;cursor:grab;user-select:none}
 .kanban.arrastando-board{cursor:grabbing}
 .kanban::-webkit-scrollbar{height:8px}
 .kanban::-webkit-scrollbar-track{background:transparent}
@@ -1900,6 +1902,7 @@ function trocarAba(ativa) {
     $(abas[k]).classList.toggle('ativa', k === ativa);
     $(views[k]).hidden = k !== ativa;
   });
+  document.querySelector('.wrap').classList.toggle('kanban-aberto', ativa === 'kanban');
   $('card-filtros').hidden = ativa === 'negociacao' || ativa === 'calendario' || ativa === 'extrato';
   if (ativa === 'calendario' && !calCarregouAlgumaVez) { calCarregouAlgumaVez = true; carregarCalendario(); }
   if (ativa === 'relatorio') desenharRelatorio();
